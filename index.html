@@ -2,9 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>OGEIDA — لوحة الأدمن</title>
+<title>OGEIDA — تطبيق الموظفين</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
@@ -61,11 +60,11 @@ a{color:var(--pri);text-decoration:none;font-weight:600}
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><h1 style="letter-spacing:1px">OGEIDA <span style="color:var(--gold)">REAL ESTATE</span><small>نظام توزيع ومتابعة الليدز</small></h1><button id="pjb" class="avb" onclick="hdrPrj()" title="مشاريعي">📁</button><button id="avb" class="avb" onclick="hdrProf()" title="حسابي"></button><span class="badge" id="role">…</span><button class="badge" style="border:0;cursor:pointer;font:inherit" onclick="logout()">خروج</button></div>
+  <div class="top"><h1 style="letter-spacing:1px">OGEIDA <span style="color:var(--gold)">REAL ESTATE</span><small>نظام توزيع ومتابعة الليدز</small></h1><button id="langBtn" class="badge" onclick="toggleLang()" title="Language">EN</button><button id="pjb" class="avb" onclick="hdrPrj()" title="مشاريعي">📁</button><button id="avb" class="avb" onclick="hdrProf()" title="حسابي"></button><span class="badge" id="role">…</span><button class="badge" style="border:0;cursor:pointer;font:inherit" onclick="logout()">خروج</button></div>
   <div id="app"><div class="empty">جاري التحميل…</div></div>
 </div>
-<script src="../config.js"></script>
-<script>window.LF_MODE="admin";window.LF_USER_URL="../";</script>
+<script src="config.js"></script>
+<script>window.LF_MODE="user";window.LF_ADMIN_URL="admin/";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 /* ===== إعدادات Supabase: من config.js ===== */
@@ -134,15 +133,13 @@ window.WA_BASE=SUPABASE_URL; // بيتستخدم في رابط استقبال ا
     generate:async force=>{const {data,error}=await sb.functions.invoke("generate-avatars",{body:{force:!!force}});if(error){let m=error.message;try{const j=await error.context.json();m=j.error==="rate_limit"?"وصلت للحد اليومي، جرّب بكرة":(j.error||m)}catch(_){}throw new Error(m)}return data},
     remove:async()=>{const {error}=await sb.functions.invoke("generate-avatars",{body:{action:"remove"}});if(error)throw error}
   };
-  // مولّد الهوكس: بينادي Edge Function "generate-hooks" (ChatGPT على السيرفر)
-  const hooks={generate:async(name,info)=>{const {data,error}=await sb.functions.invoke("generate-hooks",{body:{name,info}});if(error){let m=error.message;try{m=(await error.context.json()).error||m}catch(_){}throw new Error(m)}if(data&&data.error)throw new Error(data.error);return data.hooks}};
   // الفويس فيدباك: ملفات الصوت في Storage خاص (bucket "voice")، وبنشغّلها بروابط مؤقتة
   const voice={
     put:async(path,blob)=>{const {error}=await sb.storage.from("voice").upload(path,blob,{contentType:blob.type||"audio/webm",upsert:false});if(error)throw error;return path},
     url:async path=>{const {data,error}=await sb.storage.from("voice").createSignedUrl(path,3600);if(error)throw error;return data.signedUrl},
     remove:async path=>{const {error}=await sb.storage.from("voice").remove([path]);if(error)throw error}
   };
-  window.claude={use:async n=>{await gate;return {db,user,downloads,avatars,hooks,voice,sample:null}[n]||null}};
+  window.claude={use:async n=>{await gate;return {db,user,downloads,avatars,voice,sample:null}[n]||null}};
   window.logout=()=>sb.auth.signOut().then(()=>location.reload());
 
   const S="width:100%;margin-bottom:8px;padding:11px 12px;border-radius:12px;border:1px solid #3d3217;background:#0a0a0a;color:#f6f1e3;font:inherit";
@@ -175,9 +172,9 @@ window.WA_BASE=SUPABASE_URL; // بيتستخدم في رابط استقبال ا
 <script>
 const RES=["رد","مردش","مشغول","رقم غلط"],ACT=["هيرجع يكلمني","واتساب","طلب سعر","معاد زيارة","جاهز يحجز","مش مهتم"];
 const TL={cold:"❄️ Cold",warm:"🌤 Warm",hot:"🔥 Hot",none:"جديد"};
-let db,me,isAdmin=false,leads=[],members={},tab="over",flt="",busy="",sel={},cnt={},dueOnly=false,showAdd=false,ups=[],pf="",viewAs="",realMe="";const DUE=4*864e5;let cfg={days:4},calls=[],rd="",AVT={},WAM={},USR=null,PROFS=[],GATE="",PEND=false,utab="home",lf="all",PJ=[],showPj=false,pjForm=false,HK=null,hooks=[],hookBusy=false,hookErr="",showProf=false,crop=null,gmsg="",AVG=null;
+let db,me,isAdmin=false,leads=[],members={},vaultItems=[],tab="over",flt="",busy="",sel={},cnt={},dueOnly=false,showAdd=false,ups=[],pf="",viewAs="",realMe="";const DUE=4*864e5;let cfg={days:4},calls=[],rd="",AVT={},WAM={},USR=null,PROFS=[],GATE="",PEND=false,utab="home",lf="all",PJ=[],showPj=false,pjForm=false,showProf=false,crop=null,gmsg="",AVG=null;
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-Object.assign(TL,{cold:"🥶 Cold",warm:"😊 Warm",hot:"🥵 Hot",none:"🆕 جديد"});
+Object.assign(TL,{cold:"🚫 Not Interested",warm:"😊 Warm",hot:"🥵 Hot",none:"🆕 جديد"});
 const mood=l=>{const t=temp(l);return `<span class="mood ${t==="cold"?"shiv":t==="hot"?"pul":""}">${{cold:"🥶",warm:"😊",hot:"🥵",none:"🆕"}[t]}</span>`};
 const ALARM=`<div style="text-align:center;margin-bottom:8px"><svg width="120" height="92" viewBox="0 0 120 92"><circle cx="32" cy="24" r="11" fill="#f5c9a0"/><path d="M21 22a11 11 0 0 1 22 0z" fill="#3a2a16"/><path d="M14 88V58a18 18 0 0 1 36 0v30z" fill="#fcd34d"/><path d="M44 60L72 40" stroke="#fcd34d" stroke-width="9" stroke-linecap="round"/><circle cx="74" cy="38" r="5" fill="#f5c9a0"/><g class="ring" style="transform-box:fill-box;transform-origin:center"><circle cx="90" cy="30" r="16" fill="#fff" stroke="#fcd34d" stroke-width="4"/><path d="M90 30V20M90 30l7 4" stroke="#14130f" stroke-width="2.5" stroke-linecap="round"/><circle cx="78" cy="14" r="6" fill="#f43f5e"/><circle cx="102" cy="14" r="6" fill="#f43f5e"/><path d="M82 45l-4 6M98 45l4 6" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/><path d="M112 6l5-4M115 22h5M68 4l-5-4" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round"/></g></svg></div>`;
 const tag=t=>`<span class="t ${t}">${TL[t]}</span>`;
@@ -195,6 +192,8 @@ const due=l=>l.owner&&l.act!=="مش مهتم"&&Date.now()-(l.upd||l.at||0)>=cfg.
 function counts(L){const c={cold:0,warm:0,hot:0,none:0};L.forEach(l=>c[temp(l)]++);return c}
 function opts(a,v){return `<option value="">—</option>`+a.map(x=>`<option ${x===v?"selected":""}>${x}</option>`).join("")}
 
+let uiLang=(()=>{try{return localStorage.getItem("lf_lang")||"ar"}catch(e){return "ar"}})();
+function toggleLang(){uiLang=uiLang==="ar"?"en":"ar";try{localStorage.setItem("lf_lang",uiLang)}catch(e){}document.documentElement.lang=uiLang;document.documentElement.dir=uiLang==="ar"?"rtl":"ltr";render(1)}
 function render(f){
   const a=document.activeElement;
   if(!f&&a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)&&document.getElementById("app").contains(a)&&a.id!=="flt")return;
@@ -203,24 +202,29 @@ function render(f){
   document.getElementById("pjb").style.display=(isAdmin&&!viewAs)?"":"none";
   document.getElementById("role").textContent=isAdmin?"👑 أدمن":(members[me]?"👤 "+members[me].name:"مستخدم");
   document.getElementById("avb").innerHTML=avThumb();
+  document.getElementById("langBtn").textContent=uiLang==="ar"?"EN":"عربي";
   document.getElementById("app").innerHTML=skin(showProf?profView():showPj?pjView():isAdmin&&!viewAs?adminView():(viewAs?`<div class="card row" style="justify-content:space-between"><b>👁 عرض كـ ${esc(mname(viewAs))}</b><button class="btn g" onclick="backAdmin()">رجوع للأدمن</button></div>`:"")+(members[me]?userView():join()));
+  if(uiLang==="en")translateVisible();
   if(showProf)afterProf();else injectMsg();
 }
+function translateVisible(){const dict={"الرئيسية":"Home","ليدزي":"My Leads","مشاريعي":"My Space","المشاريع":"Projects","حسابي":"Profile","خروج":"Log out","إضافة":"Add","حفظ":"Save","رجوع":"Back","اتصال":"Call","واتساب مباشر":"WhatsApp","ملاحظات":"Notes","منبه المتابعة":"Follow-up alarm","آخر فيدباك":"Last feedback","مخزون مشاريع المجموعة":"Group Project Inventory","إضافة مشروع":"Add project","الشيت":"Leads sheet","الفريق":"Team","التقرير":"Report","استيراد":"Import","الكل":"All","غير مهتم":"Not Interested","تلقائي":"Automatic","مشغول":"Busy","مردش":"No answer","رقم غلط":"Wrong number","طلب سعر":"Requested price","معاد زيارة":"Visit scheduled","جاهز يحجز":"Ready to book","مش مهتم":"Not interested","ملاحظاتي وتذكيراتي":"My notes & reminders","المخزن الشخصي":"Personal Vault"};const w=document.createTreeWalker(document.getElementById("app"),NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){let t=n.nodeValue;for(const [a,b] of Object.entries(dict))t=t.split(a).join(b);n.nodeValue=t;} }
+
 function join(){return `<div class="card" style="max-width:420px;margin:30px auto;text-align:center"><h3>أهلاً بيك 👋</h3><p class="m">اكتب اسمك عشان تنضم للفريق وتستلم ليدزك</p><div class="row" style="justify-content:center"><input id="nm" placeholder="اسمك"><button class="btn" onclick="joinTeam()">انضمام</button></div></div>`}
 async function joinTeam(){const n=document.getElementById("nm").value.trim();if(n){await db.collection("members").doc(me).set({name:n})}}
 
 function adminView(){
-  const T=[["over","📊 الرئيسية"],["rep","📞 التقرير"],["imp","📥 استيراد"],["prj","🏗 المشاريع"],["sheet","📋 الشيت"],["team","👥 الفريق"],["set","⚙️ التحكم"]];
+  const T=[["over","📊 الرئيسية"],["rep","📞 التقرير"],["imp","📥 استيراد"],["prj","🏗 المشاريع"],["inventory","🏢 مخزون المجموعة"],["sheet","📋 الشيت"],["team","👥 الفريق"],["set","⚙️ التحكم"]];
   let h=`<div class="tabs">${T.map(([k,n])=>`<button class="tab ${tab===k?"on":""}" onclick="tab='${k}';render()">${n}</button>`).join("")}</div>`;
   const c=counts(leads),ids=memberIds();
   if(tab==="over"){
     h+=`${sCards({total:leads.length,cold:c.cold,warm:c.warm,hot:c.hot,late:leads.filter(due).length})}<div style="height:14px"></div>
-    <div class="card"><h3>أداء الفريق</h3><div class="sc"><table><tr><th>المستخدم</th><th>الليدز</th><th>Cold</th><th>Warm</th><th>Hot</th><th>تم الاتصال</th><th>⏰ متأخر</th></tr>
+    <div class="card"><h3>أداء الفريق</h3><div class="sc"><table><tr><th>المستخدم</th><th>الليدز</th><th>Not Interested</th><th>Warm</th><th>Hot</th><th>تم الاتصال</th><th>⏰ متأخر</th></tr>
     ${ids.map(u=>{const L=leads.filter(l=>l.owner===u),k=counts(L);return `<tr><td><b>${esc(mname(u))}</b></td><td>${L.length}</td><td>${k.cold}</td><td>${k.warm}</td><td>${k.hot}</td><td>${L.length-k.none}/${L.length}</td><td>${L.filter(due).length}</td></tr>`}).join("")||`<tr><td colspan=6 class="empty">لسه مفيش أعضاء</td></tr>`}</table></div></div>`;
   }
   if(tab==="over")h+=repCard()+prjDash();
   if(tab==="imp")h+=impView();
   if(tab==="prj")h+=prjView();
+  if(tab==="inventory")h+=inventoryView();
   if(tab==="set")h+=setView();
   if(tab==="rep")h+=repView();
   if(tab==="sheet"){
@@ -229,7 +233,7 @@ function adminView(){
     <div class="card"><h3>إضافة ليدز</h3><textarea id="paste" placeholder="سطر لكل ليد: الاسم, الرقم, المصدر"></textarea><button class="btn" style="margin-top:8px" onclick="addL()">إضافة للشيت</button></div>
     <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">الشيت (${leads.length})</h3><select id="flt" onchange="flt=this.value;render()"><option value="">كل الدرجات</option>${["cold","warm","hot","none"].map(k=>`<option value="${k}" ${flt===k?"selected":""}>${TL[k]}</option>`).join("")}</select></div>
     <div class="sc"><table><tr><th>الاسم</th><th>الرقم</th><th>المصدر</th><th>المسؤول</th><th>المشروع</th><th>الكول</th><th>الأكشن</th><th>الدرجة</th></tr>
-    ${leads.filter(l=>!flt||temp(l)===flt).map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.phone)}</td><td>${esc(l.source)}</td><td>${esc(l.owner?mname(l.owner):"—")}</td><td>${esc(l.proj||"—")}</td><td>${esc(l.res||"—")}</td><td>${esc(l.act||"—")}</td><td>${tag(temp(l))}</td></tr>`).join("")||`<tr><td colspan=8 class="empty">الشيت فاضي، ضيف ليدز من فوق</td></tr>`}</table></div></div>`;
+    ${leads.filter(l=>(dueOnly?due(l):true)&&(!flt||temp(l)===flt)).map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.phone)}</td><td>${esc(l.source)}</td><td>${esc(l.owner?mname(l.owner):"—")}</td><td>${esc(l.proj||"—")}</td><td>${esc(l.res||"—")}</td><td>${esc(l.act||"—")}</td><td>${tag(temp(l))}</td></tr>`).join("")||`<tr><td colspan=8 class="empty">الشيت فاضي، ضيف ليدز من فوق</td></tr>`}</table></div></div>`;
   }
   if(tab==="team"){
     h+=pendCard()+`<div class="card"><h3>أعضاء الفريق (${ids.length})</h3><div class="row" style="margin-bottom:8px"><button class="btn" onclick="demoUsers()">＋ 10 مستخدمين تجريبيين</button></div><p class="m">الأعضاء بينضموا بنفسهم لما يفتحوا اللينك ويكتبوا اسمهم. ابعت لهم لينك الصفحة (مشاركة بصلاحية Contributor).</p>
@@ -261,14 +265,15 @@ function pendView(){
 async function pendSend(){const n=(document.getElementById("pnm").value||"").trim();if(!n)return;try{await db.collection("members").doc(me).set({name:n});pendSent=true;try{localStorage.setItem("lf_joined_"+me,"1")}catch(e){}}catch(e){toast("تعذّر الإرسال")}render(1)}
 
 /* ===== تطبيق الموظف: 4 تابات ===== */
+function waLink(phone){let p=String(phone||"").replace(/[^0-9]/g,"");if(p.startsWith("00"))p=p.slice(2);if(p.startsWith("0"))p="20"+p.slice(1);return p?"https://wa.me/"+p:"#"}
 function leadCard(l){
   return `<div class="lead"><div class="h"><span class="row">${avatar(l)}<b>${esc(l.name)}</b></span><span class="row">${due(l)?`<span class="t hot"><span class="ring">⏰</span> ${daysSince(l)} يوم</span>`:""}${tag(temp(l))}</span></div>
-   <div class="m"><a href="tel:${esc(l.phone)}">📞 ${esc(l.phone)}</a> · ${esc(l.source)}</div>
+   <div class="m"><a href="tel:${esc(l.phone)}">📞 ${esc(l.phone)}</a> · ${esc(l.source)}</div><div class="row"><a class="btn" style="background:#22c55e;color:#052e16" target="_blank" rel="noopener" href="${waLink(l.phone)}">🟢 واتساب مباشر</a></div>
    <div class="two"><select onchange="up('${l.id}','res',this.value)">${opts(RES,l.res)}</select><select onchange="up('${l.id}','act',this.value)">${opts(ACT,l.act)}</select></div>
    <select onchange="up('${l.id}','proj',this.value)">${opts(PN(),l.proj)}</select>
-   <div class="seg">${[["","تلقائي"],["cold","$ بارد"],["warm","$$ دافي"],["hot","$$$ ساخن"]].map(([v,n])=>`<button data-v="${v}" class="${(l.manual||"")===v?"on":""}" onclick="up('${l.id}','manual','${v}')">${n}</button>`).join("")}</div>
+   <div class="seg">${[["","تلقائي"],["cold","🚫 غير مهتم"],["warm","$$ دافي"],["hot","$$$ ساخن"]].map(([v,n])=>`<button data-v="${v}" class="${(l.manual||"")===v?"on":""}" onclick="up('${l.id}','manual','${v}')">${n}</button>`).join("")}</div>
    <div class="two"><input type="date" value="${esc(l.follow)}" onchange="up('${l.id}','follow',this.value)"><span class="m" style="align-self:center">تاريخ المتابعة</span></div>
-   ${alarmBox(l)}${voiceBox(l)}<textarea placeholder="ملاحظات" onchange="up('${l.id}','note',this.value)">${esc(l.note)}</textarea></div>`;
+   ${alarmBox(l)}<div class="m" style="font-size:12px;margin:4px 0">آخر فيدباك: ${l.feedbackAt?new Date(l.feedbackAt).toLocaleString("ar-EG"):"لسه مفيش"}</div>${voiceBox(l)}<textarea placeholder="ملاحظات" onchange="up('${l.id}','note',this.value)">${esc(l.note)}</textarea></div>`;
 }
 const mineLeads=()=>leads.filter(l=>l.owner===me).sort((a,b)=>(due(b)?1:0)-(due(a)?1:0));
 function userHome(){
@@ -285,11 +290,11 @@ function userLeads(){
   +(list.map(leadCard).join("")||`<div class="card empty">${L.length?"مفيش ليدز بالفلتر ده":"مفيش ليدز متوزعة عليك لسه 🙌"}</div>`);
 }
 function userView(){
-  const T=[["home","🏠 الرئيسية"],["leads","📞 ليدزي"],["prj","📁 مشاريعي"],["me","👤 حسابي"]];
-  return `<div class="tabs">${T.map(([k,n])=>`<button class="tab ${utab===k?"on":""}" onclick="utab='${k}';render(1);window.scrollTo&&window.scrollTo(0,0)">${n}</button>`).join("")}</div>`+(utab==="home"?userHome():utab==="leads"?userLeads():utab==="prj"?pjView():profView());
+  const T=[["home","🏠 الرئيسية"],["leads","📞 ليدزي"],["prj","🏗 المشاريع"],["vault","📁 مشاريعي"],["me","👤 حسابي"]];
+  return `<div class="tabs">${T.map(([k,n])=>`<button class="tab ${utab===k?"on":""}" onclick="utab='${k}';render(1);window.scrollTo&&window.scrollTo(0,0)">${n}</button>`).join("")}</div>`+(utab==="home"?userHome():utab==="leads"?userLeads():utab==="prj"?teamProjectsView():utab==="vault"?vaultView():profView());
 }
 
-async function up(id,k,v){try{await db.collection("leads").doc(id).update({[k]:v,upd:Date.now()});if(k==="res"&&v){const l=leads.find(x=>x.id===id)||{},t=Date.now();if(!calls.some(c=>c.lead===id&&c.by===me&&t-c.at<12e4))await db.collection("calls").add({by:me,lead:id,name:l.name||"",res:v,at:t,day:dayKey(t)})}}catch(e){alert("تعذّر الحفظ")}}
+async function up(id,k,v){try{const now=Date.now(),patch={[k]:v,upd:now};if(["res","act","note"].includes(k))patch.feedbackAt=now;await db.collection("leads").doc(id).update(patch);if(k==="res"&&v){const l=leads.find(x=>x.id===id)||{},t=Date.now();if(!calls.some(c=>c.lead===id&&c.by===me&&t-c.at<12e4))await db.collection("calls").add({by:me,lead:id,name:l.name||"",res:v,at:t,day:dayKey(t)})}}catch(e){alert("تعذّر الحفظ")}}
 const KC=/تجاري|تجارية|محل|محلات|مول|عيادة|عيادات|مكتب|مكاتب|إداري|اداري|كافيه|ريتيل|commercial|retail|shop|office|clinic|mall/i,KR=/سكني|سكنية|شقة|شقق|دوبلكس|فيلا|فيلات|تاون هاوس|توين هاوس|كمبوند|استوديو|residential|apartment|villa|duplex/i;
 const TY={commercial:"🏬 تجاري",residential:"🏠 سكني",other:"غير مصنّف"};
 const PN=()=>[...new Set([...vups().map(u=>u.name),...pvis().map(p=>p.name)].filter(Boolean))];
@@ -355,13 +360,13 @@ async function wipe(all){
 function setView(){return `<div class="card"><h3>⚙️ إعدادات</h3><div class="row"><span>تنبيه المتابعة بعد</span><input type="number" min="1" max="60" style="width:80px" value="${cfg.days}" onchange="setDays(this.value)"><span>أيام</span></div></div>
   <div class="card"><h3>🧪 أدوات التجربة</h3><div class="row"><button class="btn" onclick="demoUsers()">＋ 10 مستخدمين</button><button class="btn" onclick="demoSheet()">＋ شيت 50 ليد</button><button class="btn" onclick="addUps(1)">＋ رسائل مشاريع</button></div><div class="row" style="margin-top:8px"><button class="btn g" onclick="demoCalls()">📞 مكالمات تجريبية</button><button class="btn g" onclick="makeLate()">⏰ خلّي 5 ليدز متأخرة</button><button class="btn g" onclick="wipe(false)">🗑 امسح التجريبي</button><button class="btn g" onclick="wipe(true)">🧨 امسح كل حاجة</button></div><div class="m" style="margin-top:8px">${busy}</div></div>
   <div class="card"><h3>📌 الحالة</h3><div class="m">${leads.length} ليد · ${memberIds().length} عضو · ${ups.length} تحديث · ${leads.filter(due).length} متأخر</div></div>`}
-Object.assign(TL,{cold:"$ بارد",warm:"$$ دافي",hot:"$$$ ساخن",none:"🪙 جديد"});
+Object.assign(TL,{cold:"🚫 Not Interested",warm:"$$ دافي",hot:"$$$ ساخن",none:"🪙 جديد"});
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const fd=ms=>{const m=Math.round(ms/6e4);return m<60?m+" د":Math.floor(m/60)+"س "+(m%60)+"د"};
 const hm=t=>new Date(t).toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
 function cstat(L){L=L.slice().sort((a,b)=>a.at-b.at);const g=[];for(let i=1;i<L.length;i++)g.push(L[i].at-L[i-1].at);return {L,g,n:L.length,avg:g.length?g.reduce((a,b)=>a+b,0)/g.length:0,max:g.length?Math.max(...g):0}}
 const SC={hot:3,warm:2,cold:1};const scoreOf=L=>L.reduce((a,l)=>a+(SC[temp(l)]||0),0);
-const skin=h=>h.replace(/❄\ufe0f?\s*Cold/g,()=>"$ بارد").replace(/🌤\ufe0f?\s*Warm/g,()=>"$$ دافي").replace(/🔥\s*Hot/g,()=>"$$$ ساخن");
+const skin=h=>h.replace(/❄\ufe0f?\s*Cold/g,()=>"🚫 غير مهتم").replace(/🌤\ufe0f?\s*Warm/g,()=>"$$ دافي").replace(/🔥\s*Hot/g,()=>"$$$ ساخن");
 const AV={
 cold:`<svg viewBox='0 0 64 64'><circle cx='32' cy='32' r='31' fill='#0f2a3d'/><path d='M14 62V46a18 18 0 0 1 36 0v16z' fill='#64748b'/><circle cx='32' cy='27' r='10' fill='#f5c9a0'/><path d='M21 25a11 11 0 0 1 22 0c-4-4-18-4-22 0z' fill='#3a2a16'/><circle cx='28' cy='27' r='1.4' fill='#222'/><circle cx='36' cy='27' r='1.4' fill='#222'/><path d='M28 35q4-3 8 0' stroke='#222' fill='none' stroke-width='1.6' stroke-linecap='round'/><circle cx='25' cy='31' r='2.5' fill='#38bdf8' opacity='.55'/><circle cx='39' cy='31' r='2.5' fill='#38bdf8' opacity='.55'/><path d='M17 54h7l-1 6zM47 54h-7l1 6z' fill='#e5e7eb'/><text x='44' y='14' font-size='11'>❄</text><text x='8' y='18' font-size='9'>❄</text></svg>`,
 warm:`<svg viewBox='0 0 64 64'><circle cx='32' cy='32' r='31' fill='#3a2a0a'/><path d='M14 62V46a18 18 0 0 1 36 0v16z' fill='#f59e0b'/><circle cx='30' cy='30' r='10' fill='#f5c9a0'/><path d='M19 28a11 11 0 0 1 22 0c-4-4-18-4-22 0z' fill='#3a2a16'/><circle cx='26' cy='30' r='1.4' fill='#222'/><circle cx='34' cy='30' r='1.4' fill='#222'/><path d='M24 25l5-1.5' stroke='#3a2a16' stroke-width='1.5' stroke-linecap='round'/><path d='M27 36h6' stroke='#222' stroke-width='1.6' stroke-linecap='round'/><circle cx='34' cy='41' r='4' fill='#f5c9a0'/><circle cx='46' cy='12' r='9' fill='#fff'/><text x='46' y='16' font-size='11' font-weight='700' text-anchor='middle' fill='#14130f'>$?</text><circle cx='38' cy='22' r='2' fill='#fff'/><circle cx='41' cy='18' r='2.6' fill='#fff'/></svg>`,
@@ -407,7 +412,7 @@ async function demoCalls(){
 }
 const ME=()=>realMe||me;
 const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const CK={total:["","إجمالي الليدز","#fcd34d","ليد"],cold:["Cold","بارد","#38bdf8","$ ليد"],warm:["Warm","دافي","#fcd34d","$$ ليد"],hot:["Hot","ساخن","#f43f5e","$$$ ليد"],late:["","متأخر عن المتابعة","#f43f5e",""]};
+const CK={total:["","إجمالي الليدز","#fcd34d","ليد"],cold:["Not Interested","غير مهتم","#38bdf8","$ ليد"],warm:["Warm","دافي","#fcd34d","$$ ليد"],hot:["Hot","ساخن","#f43f5e","$$$ ليد"],late:["","متأخر عن المتابعة","#f43f5e",""]};
 function avThumb(){const a=AVT[ME()],n=(members[ME()]&&members[ME()].name)||"";return a&&a.photo?`<img src="${esc(a.photo)}" alt="">`:`<span>${esc((n||"👤").trim().slice(0,1))}</span>`}
 function defArt(k,L){
   const bg={cold:["#0b1d33","#1e3a5f"],warm:["#2a1c08","#7a4b12"],hot:["#2b0a12","#a3341f"],total:["#1a1405","#8a6a12"],late:["#1a1218","#5a2a2a"]}[k];
@@ -416,9 +421,13 @@ function defArt(k,L){
   const ck="";
   return `<svg viewBox='0 0 300 160' preserveAspectRatio='xMinYMid slice'><defs><linearGradient id='g${k}' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${bg[1]}'/><stop offset='1' stop-color='${bg[0]}'/></linearGradient></defs><rect width='300' height='160' fill='url(#g${k})'/>${b}${ch}${ck}</svg>`;
 }
+function openLeadFilter(k){
+  if(isAdmin&&!viewAs){ dueOnly=false; if(k==="total") {tab="sheet";flt=""} else if(k==="late"){tab="sheet";flt="";dueOnly=true} else {tab="sheet";flt=k} render(1); if(k==="late")setTimeout(()=>{const x=document.querySelector('[data-k="late"]');},0); return; }
+  utab="leads";lf=k==="total"?"all":k==="late"?"due":k;render(1);window.scrollTo&&window.scrollTo(0,0);
+}
 function sCards(S){
   const A=AVT[me]||{},card=(k,full)=>{const [en,ar,col,sub]=CK[k],img=A.imgs&&A.imgs[k];
-    return `<div class="hc${full?" full":""}" data-k="${k}" style="--c:${col}"><div class="art">${img?`<img src="${esc(img)}" alt="">`:defArt(k,lookOf(me))}</div><div class="tx">${en?`<div class="en">${en}</div>`:""}<div class="ar">${ar}</div><b>${S[k]}</b><span class="sub">${k==="late"?`<span class="ring">⏰</span>`:sub}</span></div>${A.status==="pending"?`<div class="gen"><span class="spin"></span> بيتجهّز</div>`:""}</div>`};
+    return `<div class="hc${full?" full":""}" data-k="${k}" role="button" tabindex="0" onclick="openLeadFilter('${k}')" style="cursor:pointer;--c:${col}"><div class="art">${img?`<img src="${esc(img)}" alt="">`:defArt(k,lookOf(me))}</div><div class="tx">${en?`<div class="en">${en}</div>`:""}<div class="ar">${ar}</div><b>${S[k]}</b><span class="sub">${k==="late"?`<span class="ring">⏰</span>`:sub}</span></div>${A.status==="pending"?`<div class="gen"><span class="spin"></span> بيتجهّز</div>`:""}</div>`};
   return `<div class="scs">${card("total",1)}${card("cold")}${card("warm")}${card("hot")}${card("late")}</div>`;
 }
 function paint(ctx,S){const im=crop.img,iw=im.width||im.naturalWidth,ih=im.height||im.naturalHeight,s=Math.max(S/iw,S/ih)*crop.z,sx=Math.max(0,iw*s-S),sy=Math.max(0,ih*s-S);ctx.fillStyle="#000";ctx.fillRect(0,0,S,S);ctx.drawImage(im,-(sx/2)*(1+crop.x),-(sy/2)*(1+crop.y),iw*s,ih*s)}
@@ -561,18 +570,42 @@ function pjCard(p){
   ${mine?"":`<div class="m">من: ${esc(mname(p.owner))} · للقراءة فقط</div>`}
   <div class="stg">${STG.map((s,i)=>`<button class="${i<p.stage?"done":i===p.stage?"cur":""}" ${mine?`onclick="pjUp('${p.id}',{stage:${i}})"`:"disabled"}>${s}</button>`).join("")}</div>
   <div class="pbar"><i style="width:${pct}%"></i></div><div class="m">${dn}/${T.length} مهمة · ${pct}%${lc?` · ${lc} ليد`:""}</div>
-  ${(p.hooks||[]).length?`<div class="m" style="margin-top:8px">✨ هوكس محفوظة</div>${p.hooks.map((x,i)=>`<div class="row" style="padding:3px 0"><span style="flex:1;white-space:normal">${esc(x)}</span>${mine?`<button class="btn g" style="padding:2px 8px" onclick="pjUp('${p.id}',{hooks:pjGet('${p.id}').hooks.filter((_,k)=>k!==${i})})">✕</button>`:""}</div>`).join("")}`:""}${T.map((x,i)=>`<label class="row" style="padding:4px 0"><input type="checkbox" ${x.done?"checked":""} ${mine?`onchange="pjTask('${p.id}',${i},this.checked)"`:"disabled"}><span style="flex:1;${x.done?"text-decoration:line-through;opacity:.6":""}">${esc(x.t)}</span>${mine?`<button class="btn g" style="padding:2px 8px" onclick="pjDelTask('${p.id}',${i})">✕</button>`:""}</label>`).join("")}
+${T.map((x,i)=>`<label class="row" style="padding:4px 0"><input type="checkbox" ${x.done?"checked":""} ${mine?`onchange="pjTask('${p.id}',${i},this.checked)"`:"disabled"}><span style="flex:1;${x.done?"text-decoration:line-through;opacity:.6":""}">${esc(x.t)}</span>${mine?`<button class="btn g" style="padding:2px 8px" onclick="pjDelTask('${p.id}',${i})">✕</button>`:""}</label>`).join("")}
   ${mine?`<div class="row" style="margin-top:6px"><input id="nt${p.id}" placeholder="مهمة جديدة" style="flex:1;min-width:0"><button class="btn g" onclick="pjAddTask('${p.id}')">＋</button></div><textarea placeholder="ملاحظات" style="margin-top:8px" onchange="pjUp('${p.id}',{note:this.value})">${esc(p.note||"")}</textarea><div class="row" style="margin-top:8px"><button class="btn g" onclick="pjUp('${p.id}',{vis:'${p.vis==="all"?"private":"all"}'})">${p.vis==="all"?"🔒 خليه خاص":"👥 شاركه مع الكل"}</button><button class="btn g" onclick="pjDel('${p.id}')">🗑 حذف</button></div>`:(p.note?`<p class="m">${esc(p.note)}</p>`:"")}</div>`;
 }
+
+function inventoryView(){
+ const official=PJ.filter(p=>p.official===true);
+ return `<div class="card"><div class="row" style="justify-content:space-between"><h3>🏢 مخزون مشاريع المجموعة</h3><button class="btn" onclick="inventoryForm=!inventoryForm;render(1)">＋ إضافة مشروع</button></div><p class="m">المشاريع الرسمية المنشورة هنا تظهر لجميع أعضاء الفريق.</p>${inventoryForm?`<div class="grid"><input id="invName" placeholder="اسم المشروع"><select id="invType"><option value="commercial">تجاري</option><option value="residential">سكني</option><option value="other">إداري / طبي / أخرى</option></select><input id="invCompany" placeholder="الشركة المالكة"><input id="invLocation" placeholder="الموقع"><input id="invAreas" placeholder="المساحات المتاحة"><input id="invPrice" placeholder="الأسعار (اختياري)"><input id="invPayment" placeholder="أنظمة السداد"><select id="invStatus"><option>متاح</option><option>تحت الإنشاء</option><option>غير متاح</option></select><textarea id="invDesc" placeholder="وصف ومميزات المشروع"></textarea><button class="btn" onclick="saveInventory()">حفظ ونشر للفريق</button></div>`:""}</div>${official.map(p=>`<div class="card"><div class="row" style="justify-content:space-between"><h3>${esc(p.name)}</h3><span class="t ${p.status==="متاح"?"warm":"none"}">${esc(p.status||"متاح")}</span></div><div class="m">${esc(p.company||"")} · ${esc(p.location||"")}</div><p>${esc(p.description||"")}</p><div class="m">المساحات: ${esc(p.areas||"—")} · الأسعار: ${esc(p.price||"حسب التحديث")}</div><div class="m">السداد: ${esc(p.payment||"—")}</div><button class="btn g" onclick="editInventory('${p.id}')">تعديل</button><button class="btn g" onclick="deleteInventory('${p.id}')">حذف</button></div>`).join("")||`<div class="card empty">لا توجد مشاريع رسمية بعد. أضف أول مشروع ليظهر للفريق.</div>`}`;
+}
+async function saveInventory(id){const name=(document.getElementById("invName").value||document.getElementById("invEditName")?.value||"").trim();if(!name)return toast("اكتب اسم المشروع");const d={official:true,name,type:document.getElementById("invType").value,company:document.getElementById("invCompany").value,location:document.getElementById("invLocation").value,areas:document.getElementById("invAreas").value,price:document.getElementById("invPrice").value,payment:document.getElementById("invPayment").value,status:document.getElementById("invStatus").value,description:document.getElementById("invDesc").value,vis:"all",owner:ME(),upd:Date.now(),at:Date.now()};try{if(id)await db.collection("projects").doc(id).update(d);else await db.collection("projects").add(d);inventoryForm=false;toast("تم حفظ المشروع ونشره للفريق");render(1)}catch(e){toast("تعذّر حفظ المشروع")}}
+function editInventory(id){const p=PJ.find(x=>x.id===id);if(!p)return;inventoryForm=true;render(1);setTimeout(()=>{const set=(i,v)=>{const e=document.getElementById(i);if(e)e.value=v||""};set("invName",p.name);set("invType",p.type);set("invCompany",p.company);set("invLocation",p.location);set("invAreas",p.areas);set("invPrice",p.price);set("invPayment",p.payment);set("invStatus",p.status);set("invDesc",p.description);const b=document.querySelector('[onclick="saveInventory()"]');if(b)b.onclick=()=>saveInventory(id)},20)}
+async function deleteInventory(id){if(!confirm("حذف المشروع الرسمي من مخزون المجموعة؟"))return;try{await db.collection("projects").doc(id).delete()}catch(e){toast("تعذّر الحذف")}}
+function teamProjectsView(){const official=PJ.filter(p=>p.official===true);return `<div class="card"><h3>🏢 مشاريع المجموعة</h3><p class="m">المشاريع الرسمية المعتمدة من الإدارة والمتاحة لكل الفريق.</p></div>${official.map(p=>`<div class="card"><h3>${esc(p.name)}</h3><div class="m">${esc(p.company||"")} · ${esc(p.location||"")}</div><p>${esc(p.description||"")}</p><div class="m">${esc(p.areas||"")} · ${esc(p.price||"")}</div><p>أنظمة السداد: ${esc(p.payment||"—")}</p></div>`).join("")||`<div class="card empty">لم تضف الإدارة مشاريع للمجموعة حتى الآن.</div>`}${pjView()}`}
+let vaultFile=null,vaultRecorder=null,vaultChunks=[],vaultRecStream=null,vaultAudioBlob=null;
+function vaultPickFile(file){if(!file)return;if(file.size>8*1024*1024){toast("الملف أكبر من 8MB");return}vaultFile=file;const e=document.getElementById("vaultFileName");if(e)e.textContent=file.name;}
+async function vaultRecStart(){if(vaultRecorder)return;try{vaultRecStream=await navigator.mediaDevices.getUserMedia({audio:true});vaultChunks=[];vaultRecorder=new MediaRecorder(vaultRecStream);vaultRecorder.ondataavailable=e=>{if(e.data&&e.data.size)vaultChunks.push(e.data)};vaultRecorder.onstop=()=>{vaultAudioBlob=new Blob(vaultChunks,{type:vaultRecorder?.mimeType||"audio/webm"});vaultRecStream?.getTracks().forEach(t=>t.stop());vaultRecStream=null;vaultRecorder=null;toast("تم تسجيل الفويس، اضغط حفظ الملاحظة")};vaultRecorder.start();toast("التسجيل بدأ");}catch(e){toast("اسمح باستخدام المايك من إعدادات المتصفح")}}
+function vaultRecStop(){if(vaultRecorder&&vaultRecorder.state!=="inactive")vaultRecorder.stop()}
+function vaultView(){const mine=vaultItems.filter(x=>x.owner===ME()).sort((a,b)=>(b.at||0)-(a.at||0));return `<div class="card"><h3>📁 مشاريعي — المخزن الشخصي</h3><p class="m">ملاحظات وأفكار وتذكيرات خاصة بحسابك. يمكنك إرفاق صورة أو ملف وتسجيل فويس.</p><input id="vaultTitle" placeholder="عنوان الملاحظة أو المجلد" style="width:100%;margin-bottom:8px"><textarea id="vaultText" placeholder="اكتب تفاصيل المشروع أو تذكيرك هنا"></textarea><div class="row" style="margin-top:8px"><label class="btn g">🖼️ إرفاق ملف<input type="file" hidden accept="image/*,.pdf,.doc,.docx" onchange="vaultPickFile(this.files[0])"></label><span id="vaultFileName" class="m">${vaultFile?esc(vaultFile.name):"لا يوجد ملف"}</span><button class="btn g" onclick="vaultRecStart()">🎙 تسجيل فويس</button><button class="btn g" onclick="vaultRecStop()">⏹ إيقاف التسجيل</button><button class="btn" onclick="vaultSave()">💾 حفظ</button></div></div>${mine.map(v=>`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(v.title||"ملاحظة")}</b><span class="m">${new Date(v.at).toLocaleString("ar-EG")}</span></div><p style="white-space:pre-wrap">${esc(v.text||"")}</p>${v.filePath?`<div class="row"><button class="btn g" onclick="vaultOpenFile('${v.id}')">📎 فتح المرفق</button></div>`:""}${v.voicePath?`<div class="row"><button class="btn g" onclick="vaultPlayVoice('${v.id}',this)">▶ تشغيل الفويس</button></div>`:""}<div class="row"><button class="btn g" onclick="vaultEdit('${v.id}')">تعديل</button><button class="btn g" onclick="vaultDelete('${v.id}')">حذف</button></div></div>`).join("")||`<div class="card empty">المخزن فاضي. اكتب أول ملاحظة.</div>`}`}
+async function vaultOpenFile(id){const v=vaultItems.find(x=>x.id===id);if(!v?.filePath||!VC)return;try{const u=await VC.url(v.filePath);window.open(u,"_blank","noopener")}catch(e){toast("تعذّر فتح المرفق")}}
+async function vaultPlayVoice(id,btn){const v=vaultItems.find(x=>x.id===id);if(!v?.voicePath||!VC)return;try{const u=await VC.url(v.voicePath);const a=new Audio(u);await a.play();if(btn)btn.textContent="▶ تشغيل الفويس"}catch(e){toast("تعذّر تشغيل الفويس")}}
+
+async function vaultSave(id){const title=(document.getElementById("vaultTitle")?.value||"").trim(),body=(document.getElementById("vaultText")?.value||"").trim();if(!title&&!body&&!vaultFile&&!vaultAudioBlob)return toast("اكتب عنوانًا أو ملاحظة");const t=Date.now(),d={owner:ME(),title,text:body,at:t,upd:t};try{if(vaultFile){if(!VC||!VC.put)throw new Error("storage");const ext=(vaultFile.name.split(".").pop()||"bin").replace(/[^a-z0-9]/gi,"").slice(0,8),path=ME()+"/vault-"+t+"."+ext;d.filePath=await VC.put(path,vaultFile);d.fileName=vaultFile.name;d.fileType=vaultFile.type;vaultFile=null}if(vaultAudioBlob){if(!VC||!VC.put)throw new Error("storage");const ext=/mp4/.test(vaultAudioBlob.type)?"m4a":"webm",path=ME()+"/vault-voice-"+t+"."+ext;d.voicePath=await VC.put(path,vaultAudioBlob);d.voiceMime=vaultAudioBlob.type;vaultAudioBlob=null}if(id)await db.collection("vault").doc(id).update(d);else await db.collection("vault").add(d);toast("اتحفظت الملاحظة");render(1)}catch(e){toast("تعذّر الحفظ؛ تأكد من إعدادات Storage")}}
+function vaultEdit(id){const v=vaultItems.find(x=>x.id===id);if(!v)return;render(1);setTimeout(()=>{const t=document.getElementById("vaultTitle"),b=document.getElementById("vaultText");if(t)t.value=v.title||"";if(b)b.value=v.text||"";const btn=document.querySelector('[onclick="vaultSave()"]');if(btn)btn.onclick=()=>vaultSave(id)},10)}
+async function vaultDelete(id){if(!confirm("حذف الملاحظة؟"))return;try{await db.collection("vault").doc(id).delete()}catch(e){toast("تعذّر الحذف")}}
+
 function pjView(){
   const all=pvis(),mine=all.filter(p=>p.owner===ME()),oth=all.filter(p=>p.owner!==ME());
   return `<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">📁 مشاريعي</h3><span class="row"><button class="btn" onclick="pjForm=!pjForm;render(1)">＋ مشروع</button><button class="btn g" onclick="goHome()">رجوع</button></span></div><p class="m" style="margin:8px 0 0">كل مشروع ليه سير عمل (مراحل ومهام). خليه 🔒 خاص بيك بس، أو 👥 يظهر لكل الفريق للقراءة فقط.</p>${pjForm?`<div class="two" style="margin-top:10px"><input id="pn" placeholder="اسم المشروع"><select id="pt"><option value="residential">🏠 سكني</option><option value="commercial">🏬 تجاري</option><option value="other">غير مصنّف</option></select><select id="pv"><option value="private">🔒 خاص بيا</option><option value="all">👥 للكل</option></select><button class="btn" onclick="pjAdd()">إضافة</button></div>`:""}</div>
-  ${hookCard()}${mine.map(pjCard).join("")||`<div class="card empty">لسه معندكش مشاريع</div>`}${oth.length?`<h3 style="margin:14px 4px 8px">مشاريع شاركها الفريق</h3>${oth.map(pjCard).join("")}`:""}`;
+  ${mine.map(pjCard).join("")||`<div class="card empty">لسه معندكش مشاريع</div>`}${oth.length?`<h3 style="margin:14px 4px 8px">مشاريع شاركها الفريق</h3>${oth.map(pjCard).join("")}`:""}`;
 }
 
-let ringing="",ringT=0,hookName="",hookInfo="";
+let ringing="",ringT=0,inventoryForm=false;
 function toast(t){const e=document.createElement("div");e.textContent=t;e.style.cssText="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#fcd34d;color:#1a1400;padding:8px 16px;border-radius:99px;z-index:120;font-weight:700";document.body.appendChild(e);setTimeout(()=>e.remove(),1400)}
-function beep(){try{const A=new (window.AudioContext||window.webkitAudioContext)(),o=A.createOscillator(),g=A.createGain();o.connect(g);g.connect(A.destination);o.frequency.value=880;g.gain.value=.15;o.start();setTimeout(()=>{o.stop();A.close()},350)}catch(e){}}
+let alarmVolume=Number(localStorage.getItem("lf_alarm_volume")||0.35);
+function beep(){try{const A=new (window.AudioContext||window.webkitAudioContext)();[1046,1318,1568].forEach((f,i)=>{const o=A.createOscillator(),g=A.createGain();o.type="sine";o.frequency.value=f;o.connect(g);g.connect(A.destination);g.gain.setValueAtTime(0.0001,A.currentTime+i*.13);g.gain.exponentialRampToValueAtTime(Math.max(.001,alarmVolume*.22),A.currentTime+i*.13+.025);g.gain.exponentialRampToValueAtTime(.0001,A.currentTime+i*.13+.19);o.start(A.currentTime+i*.13);o.stop(A.currentTime+i*.13+.2)});setTimeout(()=>A.close(),650)}catch(e){}}
+function setAlarmVolume(v){alarmVolume=Math.max(0,Math.min(1,+v||0));try{localStorage.setItem("lf_alarm_volume",String(alarmVolume))}catch(e){}}
+
 async function alarmSet(id,t){
   if(!(t>Date.now())){toast("اختار وقت جاي");return}
   try{if(window.Notification&&Notification.permission==="default")Notification.requestPermission()}catch(e){}
@@ -594,7 +627,7 @@ function alarmBox(l){
 function ringHide(){clearInterval(ringT);const e=document.getElementById("ringm");if(e)e.remove();ringing=""}
 function ringShow(l){
   ringHide();ringing=l.id;const e=document.createElement("div");e.id="ringm";e.style.cssText="position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:16px";
-  e.innerHTML=`<div class="card" style="max-width:340px;width:100%;text-align:center"><div style="font-size:54px" class="ring">⏰</div><h3>وقت المتابعة</h3><b style="font-size:18px">${esc(l.name)}</b><div class="m" style="margin:6px 0">${esc(l.phone)}${l.note?" · "+esc(l.note):""}</div><div class="row" style="justify-content:center;margin-top:10px"><a class="btn" href="tel:${esc(l.phone)}" onclick="ringDone('${l.id}')">📞 اتصل</a><button class="btn g" onclick="ringSnooze('${l.id}',30)">⏱ بعد 30 د</button><button class="btn g" onclick="ringDone('${l.id}')">✓ تم</button></div></div>`;
+  e.innerHTML=`<div class="card" style="max-width:340px;width:100%;text-align:center"><div style="font-size:54px" class="ring">⏰</div><h3>وقت المتابعة</h3><b style="font-size:18px">${esc(l.name)}</b><div class="m" style="margin:6px 0">${esc(l.phone)}${l.note?" · "+esc(l.note):""}</div><div class="m" style="margin:10px 0">مستوى صوت المنبه <input aria-label="مستوى صوت المنبه" type="range" min="0" max="1" step="0.05" value="${alarmVolume}" oninput="setAlarmVolume(this.value)" onchange="beep()"></div><div class="row" style="justify-content:center;margin-top:10px"><a class="btn" href="tel:${esc(l.phone)}" onclick="ringDone('${l.id}')">📞 اتصل</a><button class="btn g" onclick="ringSnooze('${l.id}',30)">⏱ بعد 30 د</button><button class="btn g" onclick="ringDone('${l.id}')">✓ تم</button></div></div>`;
   document.body.appendChild(e);ringT=setInterval(beep,900);setTimeout(()=>clearInterval(ringT),12000);
 }
 async function ringDone(id){ringHide();try{await db.collection("leads").doc(id).update({rung:true})}catch(e){}}
@@ -606,21 +639,6 @@ function checkAlarms(){
   ringShow(l);
 }
 setInterval(checkAlarms,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkAlarms()});
-
-const hookPrompt=(n,x)=>`اكتب 5 هوكس (أول جملة في إعلان فيسبوك/إنستجرام) لمشروع عقاري اسمه "${n}".${x?"\nمعلومات عن المشروع: "+x:""}\nباللهجة المصرية، كل هوك جملة قصيرة (أقل من 15 كلمة) وبزاوية مختلفة: سؤال، عرض أو رقم، ندرة أو وقت، حلم وأسلوب حياة، استثمار. ماتألفش أسعار أو أرقام أو مميزات مش مذكورة في المعلومات. رجّع JSON فقط بالشكل {"hooks":["..",".."]}`;
-async function hookLocal(n,x){const s=await claude.use("sample");if(!s)throw new Error("خدمة التوليد مش متاحة هنا");const r=await s.json(hookPrompt(n,x),{modelTier:"quick"});return Array.isArray(r)?r:r.hooks}
-async function hookGen(){
-  const n=(document.getElementById("hn").value||"").trim(),x=(document.getElementById("hx").value||"").trim();if(!n)return toast("اكتب اسم المشروع");
-  hookName=n;hookInfo=x;hookBusy=true;hookErr="";hooks=[];render(1);
-  try{hooks=((HK&&HK.generate)?await HK.generate(n,x):await hookLocal(n,x)).filter(h=>typeof h==="string"&&h.trim()).slice(0,8)}catch(e){hookErr=(e&&e.message)||"تعذّر التوليد"}
-  hookBusy=false;render(1);
-}
-function hookCopy(i){const t=hooks[i];try{navigator.clipboard.writeText(t).then(()=>toast("اتنسخ ✅"),()=>toast("انسخه يدويًا"))}catch(e){toast("انسخه يدويًا")}}
-async function hookSave(i){const id=(document.getElementById("hp")||{}).value;if(!id)return toast("اختار مشروع الأول");await pjUp(id,{hooks:[...(pjGet(id).hooks||[]),hooks[i]]});toast("اتحفظ ✅")}
-function hookCard(){
-  const mine=PJ.filter(p=>p.owner===ME());
-  return `<div class="card"><h3>✨ مولّد الهوكس ${HK?"(ChatGPT)":"(نسخة تجريبية)"}</h3><p class="m">اكتب اسم المشروع وهات 5 هوكس مثالية لبداية الإعلان.</p><input id="hn" placeholder="اسم المشروع" style="width:100%;margin-bottom:6px" value="${esc(hookName)}"><textarea id="hx" placeholder="معلومات تساعد (اختياري): الموقع، المساحات، المميزات، الفئة" style="min-height:56px">${esc(hookInfo)}</textarea><div class="row" style="margin-top:8px"><button class="btn" onclick="hookGen()" ${hookBusy?"disabled":""}>${hookBusy?`<span class="spin"></span> بيكتب…`:"✨ هات هوكس"}</button>${mine.length?`<select id="hp"><option value="">احفظ في مشروع…</option>${mine.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")}</select>`:""}</div>${hookErr?`<p style="color:var(--hot)">⚠️ ${esc(hookErr)}</p>`:""}${hooks.map((h,i)=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)"><span style="flex:1;white-space:normal">${esc(h)}</span><span class="row"><button class="btn g" style="padding:4px 10px" data-i="${i}" onclick="hookCopy(+this.dataset.i)">📋</button><button class="btn g" style="padding:4px 10px" data-i="${i}" onclick="hookSave(+this.dataset.i)">💾</button></span></div>`).join("")}</div>`;
-}
 
 const VMAX=60;let REC=null,voices=[],VC=null;const vCache={};
 const fmtS=s=>String(Math.floor((s||0)/60)).padStart(2,"0")+":"+String((s||0)%60).padStart(2,"0");
@@ -669,7 +687,7 @@ function voiceList(day){
   const L=voices.filter(v=>dayKey(v.at)===day).sort((a,b)=>a.at-b.at);
   return `<div class="card"><h3>🎙 فويسات الفيدباك (${L.length})</h3>${L.map(v=>`<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)"><span><b>${esc(mname(v.by))}</b> · ${esc(v.name||"")}<span class="m"> · ${hm(v.at)} · ${fmtS(v.dur)}</span></span><button class="btn g" style="padding:3px 10px" data-v="${esc(v.id)}" onclick="vPlay(this.dataset.v,this)">▶</button></div>`).join("")||'<div class="empty">مفيش فويسات في اليوم ده</div>'}</div>`;
 }
-const MSGS=["كل كول بتعمله النهاردة بيقرّبك من حجز بكرة.","الليد اللي مردش أول مرة، ممكن يرد في التانية. كمّل.","الناس بتشتري من اللي بيتابع، مش من اللي بيحاول مرة ويقف.","ابدأ بأصعب مكالمة، وباقي اليوم هيبقى أسهل.","كل \"لأ\" بتسمعها بتقرّبك من \"أيوه\".","ابتسم قبل ما تتصل، الصوت بيوصّل الابتسامة.","اسمع أكتر ما تتكلم، العميل هيقولك هو عايز إيه.","الاستمرار أهم من الحماس. شغل صغير كل يوم بيكبر.","قارن يومك بأمس، مش بيوم حد تاني.","الليد البارد النهاردة ممكن يبقى ساخن بعد أسبوع لو اتابعته صح.","اكتب ملاحظة بعد كل كول، ذاكرتك مش هتفتكر كل التفاصيل.","اتصل بالليدز اللي اتأخرت عليهم الأول، فيهم فلوس مستنية.","العميل مش بيشتري شقة، بيشتري راحة باله وأمان أسرته.","كل صفقة كبيرة بدأت بمكالمة عادية زي اللي هتعملها دلوقتي.","خد نفس، اشرب مية، وارجع بتركيز. الدقيقة دي استثمار.","الصدق أقصر طريق لثقة العميل. متوعدش بحاجة مش في إيدك.","النهاردة يوم جديد ومفيش فيه رفض لسه. ابدأ.","التزامك بالمتابعة هو اللي بيفرّقك عن غيرك.","حدد هدف لعدد الكولات النهاردة، وحقّقه قبل ما تقفل.","كل مرة قلت فيها \"هتابع\" وعملتها، بتبني سمعتك.","سجّل فويس فيدباك بعد المكالمة وإنت لسه فاكر التفاصيل.","ماتشيلش هم ليد ضاع، اهتم بالليد اللي لسه موجود.","الفريق القوي بيشارك اللي اتعلمه. شارك هوك نجح معاك.","مكالمة قصيرة محترمة أحسن من رسالة طويلة بتتجاهل.","كل يوم شغل جاد خطوة ناحية هدفك، حتى لو مش شايفها دلوقتي.","اسأل سؤال زيادة، غالبًا فيه الإجابة اللي هتقفل الصفقة.","الوعد بالمتابعة دين. سدّده في ميعاده.","ظبط منبهاتك النهاردة، النظام بيحافظ على الحماس.","فاكر أول صفقة قفلتها؟ هتعملها تاني وأحسن.","الناجح بيتابع لحد ما العميل يقرر.","اهتم بالتفاصيل الصغيرة: الاسم صح، الميعاد صح، الوعد صح.","لما العميل يقول \"هفكر\"، اسأله: إيه اللي محتاج تعرفه عشان تقرر؟","راجع ليدزك الساخنة الأول. دي أقرب فلوس ليك النهاردة.","مش لازم يوم مثالي. المهم يوم فيه كولات أكتر من أمس.","تعب النهاردة هتشوفه في تقرير آخر الشهر.","خلّي صوتك واثق وهادي، العميل بياخد منك الطمأنينة.","لو عملت اللي عليك النهاردة، النتيجة مسألة وقت.","ركّز على العميل اللي قدامك، مش على الرقم الكلي.","كل مشروع بتسوّقه ليه ناس مستنياه. وصّله للصح.","قبل ما تقفل، سجّل ملاحظاتك وجهّز بكرة."];
+const MSGS=["كل كول بتعمله النهاردة بيقرّبك من حجز بكرة.","الليد اللي مردش أول مرة، ممكن يرد في التانية. كمّل.","الناس بتشتري من اللي بيتابع، مش من اللي بيحاول مرة ويقف.","ابدأ بأصعب مكالمة، وباقي اليوم هيبقى أسهل.","كل \"لأ\" بتسمعها بتقرّبك من \"أيوه\".","ابتسم قبل ما تتصل، الصوت بيوصّل الابتسامة.","اسمع أكتر ما تتكلم، العميل هيقولك هو عايز إيه.","الاستمرار أهم من الحماس. شغل صغير كل يوم بيكبر.","قارن يومك بأمس، مش بيوم حد تاني.","الليد البارد النهاردة ممكن يبقى ساخن بعد أسبوع لو اتابعته صح.","اكتب ملاحظة بعد كل كول، ذاكرتك مش هتفتكر كل التفاصيل.","اتصل بالليدز اللي اتأخرت عليهم الأول، فيهم فلوس مستنية.","العميل مش بيشتري شقة، بيشتري راحة باله وأمان أسرته.","كل صفقة كبيرة بدأت بمكالمة عادية زي اللي هتعملها دلوقتي.","خد نفس، اشرب مية، وارجع بتركيز. الدقيقة دي استثمار.","الصدق أقصر طريق لثقة العميل. متوعدش بحاجة مش في إيدك.","النهاردة يوم جديد ومفيش فيه رفض لسه. ابدأ.","التزامك بالمتابعة هو اللي بيفرّقك عن غيرك.","حدد هدف لعدد الكولات النهاردة، وحقّقه قبل ما تقفل.","كل مرة قلت فيها \"هتابع\" وعملتها، بتبني سمعتك.","سجّل فويس فيدباك بعد المكالمة وإنت لسه فاكر التفاصيل.","ماتشيلش هم ليد ضاع، اهتم بالليد اللي لسه موجود.","الفريق القوي بيشارك اللي اتعلمه. شارك هوك نجح معاك.","مكالمة قصيرة محترمة أحسن من رسالة طويلة بتتجاهل.","كل يوم شغل جاد خطوة ناحية هدفك، حتى لو مش شايفها دلوقتي.","اسأل سؤال زيادة، غالبًا فيه الإجابة اللي هتقفل الصفقة.","ابدأ بما تستطيع، ثم طوّر خطوتك التالية.","الانضباط هو أن تلتزم بهدفك حتى عندما يقل الحماس.","لا تجعل رفضًا واحدًا يحدد قيمة يومك؛ تعلّم وواصل.","استمع جيدًا، فالفهم يسبق الإقناع.","قسّم هدفك الكبير إلى خطوات صغيرة قابلة للقياس.","الهدوء وقت الضغط مهارة تصنع فارقًا.","راجع ما نجح اليوم وكرره غدًا.","التقدم المستمر أفضل من انتظار الظروف المثالية.","احترم وقت العميل وكن واضحًا وصادقًا في وعودك.","كل متابعة منظمة تمنحك فرصة أفضل لبناء الثقة.","الوعد بالمتابعة دين. سدّده في ميعاده.","ظبط منبهاتك النهاردة، النظام بيحافظ على الحماس.","فاكر أول صفقة قفلتها؟ هتعملها تاني وأحسن.","الناجح بيتابع لحد ما العميل يقرر.","اهتم بالتفاصيل الصغيرة: الاسم صح، الميعاد صح، الوعد صح.","لما العميل يقول \"هفكر\"، اسأله: إيه اللي محتاج تعرفه عشان تقرر؟","راجع ليدزك الساخنة الأول. دي أقرب فلوس ليك النهاردة.","مش لازم يوم مثالي. المهم يوم فيه كولات أكتر من أمس.","تعب النهاردة هتشوفه في تقرير آخر الشهر.","خلّي صوتك واثق وهادي، العميل بياخد منك الطمأنينة.","لو عملت اللي عليك النهاردة، النتيجة مسألة وقت.","ركّز على العميل اللي قدامك، مش على الرقم الكلي.","كل مشروع بتسوّقه ليه ناس مستنياه. وصّله للصح.","قبل ما تقفل، سجّل ملاحظاتك وجهّز بكرة."];
 const dayIdx=()=>{const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5)};
 const todayMsg=()=>MSGS[dayIdx()%MSGS.length];
 let msgOpen=(()=>{try{return localStorage.getItem("lf_msg")!==String(dayIdx())}catch(e){return true}})();
@@ -747,7 +765,7 @@ function exp(){
 }
 (async()=>{
   try{
-    db=await claude.use("db");const user=await claude.use("user");try{AVG=await claude.use("avatars")}catch(e){AVG=null}try{HK=await claude.use("hooks")}catch(e){HK=null}try{VC=await claude.use("voice")}catch(e){VC=null}
+    db=await claude.use("db");const user=await claude.use("user");try{AVG=await claude.use("avatars")}catch(e){AVG=null}try{VC=await claude.use("voice")}catch(e){VC=null}
     if(!db||!user){document.getElementById("app").innerHTML=`<div class="card empty">سجّل دخولك في claude.ai عشان تفتح الصفحة</div>`;return}
     me=await user.id();isAdmin=await user.canEdit();USR=user;
     if(MODE==="admin"&&!isAdmin){GATE="noadmin";render(1);return}
@@ -758,6 +776,7 @@ function exp(){
     db.doc("settings/config").onSnapshot(s=>{if(s.exists)cfg={...cfg,...s.data()};render()},()=>{});
     db.collection("voices").onSnapshot(s=>{voices=s.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
     db.collection("projects").onSnapshot(s=>{PJ=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.upd||0)-(a.upd||0));render()},()=>{});
+    db.collection("vault").onSnapshot(s=>{vaultItems=s.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
     db.collection("wa_meta").onSnapshot(s=>{WAM={};s.docs.forEach(d=>WAM[d.id]=d.data());render()},()=>{});
     db.collection("avatars").onSnapshot(s=>{AVT={};s.docs.forEach(d=>AVT[d.id]=d.data());render()},()=>{});
     db.collection("calls").onSnapshot(s=>{calls=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.at-b.at);render()},()=>{});
