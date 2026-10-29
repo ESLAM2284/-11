@@ -2,8 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>OGEIDA — تطبيق الموظفين</title>
+<title>OGEIDA — لوحة الأدمن</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
@@ -63,8 +64,8 @@ a{color:var(--pri);text-decoration:none;font-weight:600}
   <div class="top"><h1 style="letter-spacing:1px">OGEIDA <span style="color:var(--gold)">REAL ESTATE</span><small>نظام توزيع ومتابعة الليدز</small></h1><button id="pjb" class="avb" onclick="hdrPrj()" title="مشاريعي">📁</button><button id="avb" class="avb" onclick="hdrProf()" title="حسابي"></button><span class="badge" id="role">…</span><button class="badge" style="border:0;cursor:pointer;font:inherit" onclick="logout()">خروج</button></div>
   <div id="app"><div class="empty">جاري التحميل…</div></div>
 </div>
-<script src="config.js"></script>
-<script>window.LF_MODE="user";window.LF_ADMIN_URL="admin/";</script>
+<script src="../config.js"></script>
+<script>window.LF_MODE="admin";window.LF_USER_URL="../";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 /* ===== إعدادات Supabase: من config.js ===== */
