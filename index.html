@@ -71,7 +71,6 @@ a{color:var(--pri);text-decoration:none;font-weight:600}
 // القيم دي بتيجي من ملف config.js (بتعدّلهم هناك مرة واحدة)
 const SUPABASE_URL=(window.LF_CONFIG&&window.LF_CONFIG.url)||"PASTE_PROJECT_URL";
 const SUPABASE_ANON_KEY=(window.LF_CONFIG&&window.LF_CONFIG.key)||"PASTE_ANON_KEY";
-window.WA_BASE=SUPABASE_URL; // بيتستخدم في رابط استقبال الواتساب
 
 /* ===== طبقة الربط بين الموقع وSupabase (مش لازم تعدّل فيها) ===== */
 (function(){
@@ -174,7 +173,7 @@ window.WA_BASE=SUPABASE_URL; // بيتستخدم في رابط استقبال ا
 <script>
 const RES=["رد","مردش","مشغول","رقم غلط"],ACT=["هيرجع يكلمني","واتساب","طلب سعر","معاد زيارة","جاهز يحجز","مش مهتم"];
 const TL={cold:"❄️ Cold",warm:"🌤 Warm",hot:"🔥 Hot",none:"جديد"};
-let db,me,isAdmin=false,leads=[],members={},tab="over",flt="",busy="",sel={},cnt={},dueOnly=false,showAdd=false,ups=[],pf="",viewAs="",realMe="";const DUE=4*864e5;let cfg={days:4},calls=[],rd="",AVT={},WAM={},USR=null,PROFS=[],GATE="",PEND=false,utab="home",lf="all",PJ=[],showPj=false,pjForm=false,HK=null,hooks=[],hookBusy=false,hookErr="",showProf=false,crop=null,gmsg="",AVG=null;
+let db,me,isAdmin=false,isTeamLeader=false,leads=[],feedbackItems=[],mapsItems=[],members={},tab="over",flt="",busy="",sel={},cnt={},dueOnly=false,showAdd=false,ups=[],pf="",viewAs="",realMe="";const DUE=4*864e5;let cfg={days:4},calls=[],rd="",AVT={},USR=null,PROFS=[],GATE="",PEND=false,utab="home",lf="all",PJ=[],showPj=false,pjForm=false,HK=null,hooks=[],hookBusy=false,hookErr="",showProf=false,crop=null,gmsg="",AVG=null;
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 Object.assign(TL,{cold:"🥶 Cold",warm:"😊 Warm",hot:"🥵 Hot",none:"🆕 جديد"});
 const mood=l=>{const t=temp(l);return `<span class="mood ${t==="cold"?"shiv":t==="hot"?"pul":""}">${{cold:"🥶",warm:"😊",hot:"🥵",none:"🆕"}[t]}</span>`};
@@ -200,7 +199,7 @@ function render(f){
   if(GATE){document.getElementById("app").innerHTML=gateView(GATE);return}
   if(PEND){document.getElementById("app").innerHTML=pendView();return}
   document.getElementById("pjb").style.display=(isAdmin&&!viewAs)?"":"none";
-  document.getElementById("role").textContent=isAdmin?"👑 أدمن":(members[me]?"👤 "+members[me].name:"مستخدم");
+  document.getElementById("role").textContent=isAdmin?"👑 أدمن":(isTeamLeader?"👥 Team Leader":(members[me]?"👤 "+members[me].name:"مستخدم"));
   document.getElementById("avb").innerHTML=avThumb();
   document.getElementById("app").innerHTML=skin(showProf?profView():showPj?pjView():isAdmin&&!viewAs?adminView():(viewAs?`<div class="card row" style="justify-content:space-between"><b>👁 عرض كـ ${esc(mname(viewAs))}</b><button class="btn g" onclick="backAdmin()">رجوع للأدمن</button></div>`:"")+(members[me]?userView():join()));
   if(showProf)afterProf();else injectMsg();
@@ -227,8 +226,8 @@ function adminView(){
     h+=`<div class="card"><h3>توزيع</h3><div class="row"><button class="btn" onclick="dist('new')">🎲 وزّع غير الموزّع (${un})</button><button class="btn g" onclick="dist('all')">🔀 أعد توزيع الكل</button><button class="btn g" onclick="dist('cold')">♻️ أعد توزيع الـ Cold</button><button class="btn g" onclick="exp()">⬇️ CSV</button></div><div class="m" style="margin-top:8px">${busy}</div></div>
     <div class="card"><h3>إضافة ليدز</h3><textarea id="paste" placeholder="سطر لكل ليد: الاسم, الرقم, المصدر"></textarea><button class="btn" style="margin-top:8px" onclick="addL()">إضافة للشيت</button></div>
     <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">الشيت (${leads.length})</h3><select id="flt" onchange="flt=this.value;render()"><option value="">كل الدرجات</option>${["cold","warm","hot","none"].map(k=>`<option value="${k}" ${flt===k?"selected":""}>${TL[k]}</option>`).join("")}</select></div>
-    <div class="sc"><table><tr><th>الاسم</th><th>الرقم</th><th>المصدر</th><th>المسؤول</th><th>المشروع</th><th>الكول</th><th>الأكشن</th><th>الدرجة</th></tr>
-    ${leads.filter(l=>!flt||temp(l)===flt).map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.phone)}</td><td>${esc(l.source)}</td><td>${esc(l.owner?mname(l.owner):"—")}</td><td>${esc(l.proj||"—")}</td><td>${esc(l.res||"—")}</td><td>${esc(l.act||"—")}</td><td>${tag(temp(l))}</td></tr>`).join("")||`<tr><td colspan=8 class="empty">الشيت فاضي، ضيف ليدز من فوق</td></tr>`}</table></div></div>`;
+    <div class="sc"><table><tr><th>الاسم</th><th>الرقم</th><th>المصدر</th><th>المسؤول</th><th>المشروع</th><th>الكول</th><th>الأكشن</th><th>الدرجة</th><th>الفويس</th></tr>
+    ${leads.filter(l=>!flt||temp(l)===flt).map(l=>`<tr><td>${esc(l.name)}</td><td>${esc(l.phone)}</td><td>${esc(l.source)}</td><td>${esc(l.owner?mname(l.owner):"—")}</td><td>${esc(l.proj||"—")}</td><td>${esc(l.res||"—")}</td><td>${esc(l.act||"—")}</td><td>${tag(temp(l))}</td><td>${voices.filter(v=>v.lead===l.id).map(v=>`<button class="btn g" data-v="${esc(v.id)}" onclick="vPlay(this.dataset.v,this)">▶ ${fmtS(v.dur)}</button>`).join(" ")||"—"}</td></tr>`).join("")||`<tr><td colspan=9 class="empty">الشيت فاضي، ضيف ليدز من فوق</td></tr>`}</table></div></div>`;
   }
   if(tab==="team"){
     h+=pendCard()+`<div class="card"><h3>أعضاء الفريق (${ids.length})</h3><div class="row" style="margin-bottom:8px"><button class="btn" onclick="demoUsers()">＋ 10 مستخدمين تجريبيين</button></div><p class="m">الأعضاء بينضموا بنفسهم لما يفتحوا اللينك ويكتبوا اسمهم. ابعت لهم لينك الصفحة (مشاركة بصلاحية Contributor).</p>
@@ -241,7 +240,7 @@ const isPending=id=>PROFS.some(p=>p.id===id&&!p.approved&&!p.is_admin);
 const memberIds=()=>Object.keys(members).filter(id=>!isPending(id));
 function goHome(){showPj=false;showProf=false;crop=null;utab="home";render(1);window.scrollTo&&window.scrollTo(0,0)}
 function hdrProf(){if(isAdmin&&!viewAs){showProf=!showProf;showPj=false;crop=null}else utab=utab==="me"?"home":"me";render(1)}
-function hdrPrj(){if(isAdmin&&!viewAs){showPj=!showPj;showProf=false;crop=null}else utab=utab==="prj"?"home":"prj";render(1)}
+function hdrPrj(){if(isAdmin&&!viewAs){showPj=!showPj;showProf=false;crop=null}else utab=utab==="myprojects"?"home":"myprojects";render(1)}
 async function loadProfs(){try{if(USR&&USR.profiles){PROFS=await USR.profiles();render()}}catch(e){}}
 async function approve(id,v){try{await USR.setApproved(id,v);await loadProfs();toast(v?"اتوافق عليه ✅":"اتلغت الموافقة")}catch(e){toast("تعذّر التنفيذ")}render(1)}
 async function rejectP(id){if(!confirm("رفض الطلب؟"))return;try{await db.collection("members").doc(id).delete()}catch(e){}render(1)}
@@ -260,14 +259,17 @@ function pendView(){
 async function pendSend(){const n=(document.getElementById("pnm").value||"").trim();if(!n)return;try{await db.collection("members").doc(me).set({name:n});pendSent=true;try{localStorage.setItem("lf_joined_"+me,"1")}catch(e){}}catch(e){toast("تعذّر الإرسال")}render(1)}
 
 /* ===== تطبيق الموظف: 4 تابات ===== */
+function waLink(phone){let p=String(phone||"").replace(/\D/g,"");if(p.startsWith("00"))p=p.slice(2);if(p.startsWith("0"))p="20"+p.slice(1);return p?"https://wa.me/"+p:"#"}
+function tgLink(phone){let p=String(phone||"").replace(/\D/g,"");if(p.startsWith("00"))p=p.slice(2);if(p.startsWith("0"))p="20"+p.slice(1);return p?"https://t.me/+"+p:"https://t.me/"}
+async function confirmFeedback(id){const el=document.getElementById("fb-"+id),text=(el?.value||"").trim();if(!text)return toast("اكتب الفيدباك الأول");const t=Date.now();try{await db.collection("feedback").add({lead:id,by:ME(),text,at:t,confirmed:true});await db.collection("leads").doc(id).update({feedbackAt:t,upd:t});toast("تم تأكيد الفيدباك وحفظه");}catch(e){toast("تعذّر حفظ الفيدباك؛ راجع صلاحيات قاعدة البيانات")}}
 function leadCard(l){
   return `<div class="lead"><div class="h"><span class="row">${avatar(l)}<b>${esc(l.name)}</b></span><span class="row">${due(l)?`<span class="t hot"><span class="ring">⏰</span> ${daysSince(l)} يوم</span>`:""}${tag(temp(l))}</span></div>
-   <div class="m"><a href="tel:${esc(l.phone)}">📞 ${esc(l.phone)}</a> · ${esc(l.source)}</div>
+   <div class="row"><a class="btn g" href="tel:${esc(l.phone)}">📞 اتصال</a><a class="btn g" target="_blank" rel="noopener" href="${waLink(l.phone)}">🟢 WhatsApp</a><a class="btn g" target="_blank" rel="noopener" href="${tgLink(l.phone)}">✈️ Telegram</a><span class="m">${esc(l.phone)} · ${esc(l.source)}</span></div>
    <div class="two"><select onchange="up('${l.id}','res',this.value)">${opts(RES,l.res)}</select><select onchange="up('${l.id}','act',this.value)">${opts(ACT,l.act)}</select></div>
    <select onchange="up('${l.id}','proj',this.value)">${opts(PN(),l.proj)}</select>
    <div class="seg">${[["","تلقائي"],["cold","$ بارد"],["warm","$$ دافي"],["hot","$$$ ساخن"]].map(([v,n])=>`<button data-v="${v}" class="${(l.manual||"")===v?"on":""}" onclick="up('${l.id}','manual','${v}')">${n}</button>`).join("")}</div>
    <div class="two"><input type="date" value="${esc(l.follow)}" onchange="up('${l.id}','follow',this.value)"><span class="m" style="align-self:center">تاريخ المتابعة</span></div>
-   ${alarmBox(l)}${voiceBox(l)}<textarea placeholder="ملاحظات" onchange="up('${l.id}','note',this.value)">${esc(l.note)}</textarea></div>`;
+   ${alarmBox(l)}${voiceBox(l)}<textarea id="fb-${l.id}" placeholder="اكتب الفيدباك / تفاصيل المكالمة">${esc(l.feedback||l.note||"")}</textarea><div class="row"><button class="btn" onclick="confirmFeedback('${l.id}')">✓ تأكيد الفيدباك</button><span class="m">${l.feedbackAt?"آخر تأكيد: "+new Date(l.feedbackAt).toLocaleString("ar-EG"):"لم يتم التأكيد بعد"}</span></div></div>`;
 }
 const mineLeads=()=>leads.filter(l=>l.owner===me).sort((a,b)=>(due(b)?1:0)-(due(a)?1:0));
 function userHome(){
@@ -283,15 +285,31 @@ function userLeads(){
   return `<div class="card"><div class="row" style="justify-content:space-between"><b>ليدزي (${L.length})</b><button class="btn" onclick="showAdd=!showAdd;render(1)">＋ ليد جديد</button></div>${showAdd?`<div class="two" style="margin-top:10px"><input id="an" placeholder="الاسم"><input id="ap" placeholder="الرقم" inputmode="tel"><input id="as" placeholder="المصدر (اختياري)"><button class="btn" onclick="addMine()">إضافة</button></div>`:""}<div class="row" style="margin-top:10px">${chips.map(([k,n])=>`<button class="btn ${lf===k?"":"g"}" style="padding:5px 12px;font-size:12px" onclick="lf='${k}';render(1)">${n}</button>`).join("")}</div></div>`
   +(list.map(leadCard).join("")||`<div class="card empty">${L.length?"مفيش ليدز بالفلتر ده":"مفيش ليدز متوزعة عليك لسه 🙌"}</div>`);
 }
+
+/* ===== مخزن المجموعة ومرفقات متعددة ===== */
+let groupFiles=[],groupVoiceBlob=null;
+function groupPickFiles(files){groupFiles=[...(files||[])].slice(0,10);const e=document.getElementById("groupFilesName");if(e)e.textContent=groupFiles.map(f=>f.name).join("، ")||"لا توجد مرفقات"}
+async function groupRecStart(){if(groupRec)return;if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)return toast("التسجيل غير مدعوم");try{groupRecStream=await navigator.mediaDevices.getUserMedia({audio:true});groupRecChunks=[];groupRec=new MediaRecorder(groupRecStream);groupRec.ondataavailable=e=>{if(e.data?.size)groupRecChunks.push(e.data)};groupRec.onstop=()=>{groupVoiceBlob=new Blob(groupRecChunks,{type:groupRec?.mimeType||"audio/webm"});groupRecStream?.getTracks().forEach(t=>t.stop());groupRecStream=null;groupRec=null;clearInterval(groupRecTimer);groupRecTimer=null;toast("تم تسجيل الفويس")};groupRec.start();groupRecStarted=Date.now();groupRecTimer=setInterval(()=>{const e=document.getElementById("groupRecClock");if(e)e.textContent=fmtS((Date.now()-groupRecStarted)/1000)},500);render(1)}catch(e){toast("اسمح باستخدام الميكروفون")}}
+function groupRecStop(){if(groupRec&&groupRec.state!=="inactive")groupRec.stop()}
+async function groupVaultSave(){const title=(document.getElementById("groupTitle")?.value||"").trim(),textBody=(document.getElementById("groupText")?.value||"").trim();if(!title&&!textBody&&!groupFiles.length&&!groupVoiceBlob)return toast("أضف عنوانًا أو مرفقًا");if(!VC?.put)return toast("تخزين الملفات غير متاح حاليًا");const t=Date.now(),attachments=[];try{for(const f of groupFiles){const path=ME()+"/group-"+t+"-"+Math.random().toString(36).slice(2)+"-"+f.name.replace(/[^a-z0-9._-]/gi,"_");attachments.push({path:await VC.put(path,f),name:f.name,type:f.type||"application/octet-stream"})}if(groupVoiceBlob){const ext=/mp4/.test(groupVoiceBlob.type)?"m4a":"webm",path=ME()+"/group-voice-"+t+"."+ext;attachments.push({path:await VC.put(path,groupVoiceBlob),name:"تسجيل صوتي",type:groupVoiceBlob.type,voice:true})}await db.collection("group_vault").add({title,text:textBody,attachments,by:ME(),at:t});groupFiles=[];groupVoiceBlob=null;toast("تمت الإضافة لمخزن المجموعة");render(1)}catch(e){toast("تعذّر رفع المرفقات؛ تحقق من Storage")}}
+async function groupVaultOpen(path){if(!VC?.url)return;try{window.open(await VC.url(path),"_blank","noopener")}catch(e){toast("تعذّر فتح الملف")}}
+function groupVaultView(){const rows=teamVaultItems.slice().sort((a,b)=>(b.at||0)-(a.at||0));return `<div class="card"><h3>🗄️ مخزن المجموعة</h3><p class="m">أضف ملفات وصورًا وتسجيلات صوتية ليستفيد منها الفريق.</p><input id="groupTitle" placeholder="عنوان المرفق" style="width:100%;margin-bottom:8px"><textarea id="groupText" placeholder="وصف أو ملاحظات"></textarea><div class="row"><label class="btn g">📎 إضافة ملفات وصور<input type="file" hidden multiple accept="*/*" onchange="groupPickFiles(this.files)"></label><span id="groupFilesName" class="m">لا توجد مرفقات</span><button class="btn g" onclick="groupRecStart()">🎙 تسجيل فويس</button><span id="groupRecClock" class="t hot">00:00</span><button class="btn g" onclick="groupRecStop()">⏹ إيقاف</button><button class="btn" onclick="groupVaultSave()">حفظ في مخزن المجموعة</button></div></div>${rows.map(v=>`<div class="card"><b>${esc(v.title||"مرفق")}</b><div class="m">بواسطة ${esc(mname(v.by))} · ${new Date(v.at).toLocaleString("ar-EG")}</div><p>${esc(v.text||"")}</p><div class="row">${(v.attachments||[]).map(a=>`<button class="btn g" onclick="groupVaultOpen('${esc(a.path)}')">${a.voice?"🎙":"📎"} ${esc(a.name||"مرفق")}</button>`).join("")}</div></div>`).join("")||`<div class="card empty">مخزن المجموعة فارغ حتى الآن.</div>`}`}
+let mapsFiles=[];
+function mapsPick(files){mapsFiles=[...(files||[])].slice(0,20);const e=document.getElementById("mapsFileNames");if(e)e.textContent=mapsFiles.map(f=>f.name).join("، ")||"لم يتم اختيار ملفات"}
+async function mapsSave(){if(!isAdmin)return toast("إضافة الخرائط متاحة للأدمن فقط");const title=(document.getElementById("mapsTitle")?.value||"").trim();if(!title&&!mapsFiles.length)return toast("اكتب عنوانًا أو اختر ملفات");if(!VC?.put)return toast("خدمة رفع الملفات غير متاحة");const at=Date.now(),attachments=[];try{for(const f of mapsFiles){const clean=f.name.replace(/[^a-z0-9._-]/gi,"_").slice(-100),path=ME()+"/maps-"+at+"-"+Math.random().toString(36).slice(2)+"-"+clean;attachments.push({path:await VC.put(path,f),name:f.name,type:f.type||"application/octet-stream",size:f.size})}await db.collection("maps_library").add({title,notes:(document.getElementById("mapsNotes")?.value||"").trim(),attachments,by:ME(),at});mapsFiles=[];toast("تم رفع ملفات الخرائط");render(1)}catch(e){toast("تعذّر رفع الملفات؛ راجع صلاحيات Storage")}}
+async function mapsOpen(path){if(!VC?.url)return toast("خدمة الملفات غير متاحة");try{window.open(await VC.url(path),"_blank","noopener")}catch(e){toast("تعذّر فتح الملف")}}
+function mapsLibraryView(){const rows=mapsItems.slice().sort((a,b)=>(b.at||0)-(a.at||0));return `${isAdmin?`<div class="card"><h3>🗺️ إضافة ملفات الخرائط</h3><input id="mapsTitle" placeholder="اسم الخريطة أو المنطقة" style="width:100%;margin-bottom:8px"><textarea id="mapsNotes" placeholder="ملاحظات عن الخريطة (اختياري)"></textarea><div class="row"><label class="btn g">📎 اختيار ملفات وصور<input type="file" hidden multiple accept="image/*,.pdf,.doc,.docx,.xlsx,.kml,.kmz,.zip" onchange="mapsPick(this.files)"></label><span id="mapsFileNames" class="m">لم يتم اختيار ملفات</span><button class="btn" onclick="mapsSave()">رفع وحفظ</button></div></div>`:`<div class="card"><h3>🗺️ الخرائط</h3><p class="m">ملفات وصور الخرائط المعتمدة من الإدارة.</p></div>`}${rows.map(x=>`<div class="card"><b>${esc(x.title||"خريطة")}</b><div class="m">${new Date(x.at).toLocaleString("ar-EG")} · ${esc(mname(x.by))}</div><p>${esc(x.notes||"")}</p><div class="row">${(x.attachments||[]).map(a=>`<button class="btn g" onclick="mapsOpen('${esc(a.path)}')">${a.type?.startsWith("image/")?"🖼️":"📎"} ${esc(a.name||"مرفق")}</button>`).join("")}</div></div>`).join("")||`<div class="card empty">لا توجد خرائط مضافة حتى الآن.</div>`}`}
+function teamView(){const ids=members[ME()]?.teamMembers||[];const L=leads.filter(l=>ids.includes(l.owner));return `<div class="card"><h3>👥 فريقي</h3><p class="m">عرض للقراءة فقط للأعضاء الذين خصصهم الأدمن لك.</p>${ids.map(id=>`<div class="row"><b>${esc(mname(id))}</b><span class="m">${leads.filter(l=>l.owner===id).length} Lead</span></div>`).join("")||`<div class="empty">الأدمن لم يخصص أعضاء لفريقك بعد.</div>`}</div>${L.map(l=>`<div class="card"><b>${esc(l.name)}</b><div class="m">${esc(l.phone)} · ${esc(mname(l.owner))}</div><div>${feedbackItems.filter(f=>f.lead===l.id).map(f=>`<p>${esc(f.text)} <span class="m">${new Date(f.at).toLocaleString("ar-EG")}</span></p>`).join("")}</div>${calls.filter(c=>c.lead===l.id).sort((a,b)=>(b.at||0)-(a.at||0)).map(c=>`<p class="m">📞 ${esc(c.res||"مكالمة")} · ${new Date(c.at).toLocaleString("ar-EG")}</p>`).join("")}${voices.filter(v=>v.lead===l.id).map(v=>`<button class="btn g" onclick="vPlay('${v.id}',this)">▶ تشغيل فويس · ${new Date(v.at).toLocaleString("ar-EG")}</button>`).join("")}</div>`).join("")}`}
+
 function userView(){
-  const T=[["home","🏠 الرئيسية"],["leads","📞 ليدزي"],["prj","📁 مشاريعي"],["me","👤 حسابي"]];
-  return `<div class="tabs">${T.map(([k,n])=>`<button class="tab ${utab===k?"on":""}" onclick="utab='${k}';render(1);window.scrollTo&&window.scrollTo(0,0)">${n}</button>`).join("")}</div>`+(utab==="home"?userHome():utab==="leads"?userLeads():utab==="prj"?pjView():profView());
+  const T=[["home","🏠 الرئيسية"],["leads","📞 ليدزي"],["prj","🏢 مشاريع الشركة"],["myprojects","📁 مشاريعي"] ,["vault","🗄️ مخزن المجموعة"],["maps","🗺️ الخرائط"],...(isTeamLeader?[["team","👥 فريقي"]]:[]),["me","👤 حسابي"]];
+  return `<div class="tabs">${T.map(([k,n])=>`<button class="tab ${utab===k?"on":""}" onclick="utab='${k}';render(1);window.scrollTo&&window.scrollTo(0,0)">${n}</button>`).join("")}</div>`+(utab==="home"?userHome():utab==="leads"?userLeads():utab==="prj"?teamProjectsView():utab==="myprojects"?pjView():utab==="vault"?groupVaultView():utab==="maps"?mapsLibraryView():utab==="team"&&isTeamLeader?teamView():profView());
 }
 
 async function up(id,k,v){try{await db.collection("leads").doc(id).update({[k]:v,upd:Date.now()});if(k==="res"&&v){const l=leads.find(x=>x.id===id)||{},t=Date.now();if(!calls.some(c=>c.lead===id&&c.by===me&&t-c.at<12e4))await db.collection("calls").add({by:me,lead:id,name:l.name||"",res:v,at:t,day:dayKey(t)})}}catch(e){alert("تعذّر الحفظ")}}
 const KC=/تجاري|تجارية|محل|محلات|مول|عيادة|عيادات|مكتب|مكاتب|إداري|اداري|كافيه|ريتيل|commercial|retail|shop|office|clinic|mall/i,KR=/سكني|سكنية|شقة|شقق|دوبلكس|فيلا|فيلات|تاون هاوس|توين هاوس|كمبوند|استوديو|residential|apartment|villa|duplex/i;
 const TY={commercial:"🏬 تجاري",residential:"🏠 سكني",other:"غير مصنّف"};
-const PN=()=>[...new Set([...vups().map(u=>u.name),...pvis().map(p=>p.name)].filter(Boolean))];
+const PN=()=>[...new Set(PJ.filter(p=>p.official===true).map(p=>p.name).filter(Boolean))];
 const DEMO=[`Walk'n Mall: تحديث جديد، فتح الحجز للمحلات التجارية والعيادات بمساحات صغيرة، مقدم وتقسيط مرن (رسالة تجريبية)`,`Pantera: شقق سكنية بمساحات متنوعة، وعرض EOI لفترة محدودة (رسالة تجريبية)`,`تبرا مول: إضافة مكاتب إدارية وكافيهات في الدور الأول، التفاصيل مع المبيعات (رسالة تجريبية)`,`حدائق أكتوبر: دوبلكس بحديقة خاصة، استلام فوري وتقسيط مريح (رسالة تجريبية)`];
 function guess(t){
   const n=(t.split(/[:：\n]/)[0]||"").replace(/^(تحديث|جديد|عاجل)\s*(مشروع)?\s*/,"").trim().slice(0,40);
@@ -312,16 +330,11 @@ async function addUps(demo){
 }
 async function setT(id,v){await db.collection("updates").doc(id).update({type:v})}
 async function delU(id){if(confirm("حذف التحديث؟"))await db.collection("updates").doc(id).delete()}
-function prjFeed(n){const L=vups().slice(0,n);if(!L.length)return"";return `<div class="card"><h3>🏗 آخر تحديثات المشاريع</h3>${L.map(u=>`<div style="padding:8px 0;border-bottom:1px solid var(--bd)"><div class="row" style="justify-content:space-between"><b>${esc(u.name)}</b><span class="t ${u.type==="commercial"?"warm":u.type==="residential"?"cold":"none"}">${TY[u.type]||TY.other}</span></div><div class="m" style="white-space:normal">${esc(u.text)}</div></div>`).join("")}</div>`}
-function prjDash(){
-  const k=t=>ups.filter(u=>u.type===t).length;
-  return `<div style="height:14px"></div><div class="grid"><div class="kpi" style="--c:var(--warm)"><b>${k("commercial")}</b><span>🏬 تحديثات تجارية</span></div><div class="kpi" style="--c:var(--cold)"><b>${k("residential")}</b><span>🏠 تحديثات سكنية</span></div><div class="kpi"><b>${PN().length}</b><span>🏗 مشاريع</span></div></div><div style="height:14px"></div>`+prjFeed(5);
-}
-function prjView(){
-  const L=ups.filter(u=>!pf||u.type===pf);
-  return `<div class="card"><h3>ربط الواتساب (ديمو)</h3><p class="m">في النسخة الحقيقية رسائل الجروبات بتوصل لوحدها. هنا الصق الرسائل (بين كل رسالة وأخرى سطر فاضي) أو جرّب الرسائل التجريبية.</p><input id="pg" placeholder="اسم الجروب (اختياري)" style="width:100%;margin-bottom:8px"><textarea id="pm" placeholder="الصق رسائل الجروب هنا"></textarea><div class="row" style="margin-top:8px"><button class="btn" onclick="addUps()">🤖 حلّل وصنّف</button><button class="btn g" onclick="addUps(1)">رسائل تجريبية</button></div><div class="m" style="margin-top:8px">${busy}</div></div>
-  <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">التحديثات (${L.length})</h3><select onchange="pf=this.value;render(1)"><option value="">الكل</option><option value="commercial" ${pf==="commercial"?"selected":""}>تجاري</option><option value="residential" ${pf==="residential"?"selected":""}>سكني</option><option value="other" ${pf==="other"?"selected":""}>غير مصنّف</option></select></div>${L.map(u=>`<div style="padding:10px 0;border-bottom:1px solid var(--bd)"><div class="row" style="justify-content:space-between"><b>${esc(u.name)}</b><span class="row"><select onchange="setT('${u.id}',this.value)"><option value="commercial" ${u.type==="commercial"?"selected":""}>🏬 تجاري</option><option value="residential" ${u.type==="residential"?"selected":""}>🏠 سكني</option><option value="other" ${u.type==="other"?"selected":""}>غير مصنّف</option></select><button class="btn g" onclick="delU('${u.id}')">✕</button></span></div><div class="m" style="white-space:normal;margin-top:4px">${esc(u.text)}</div><div class="m" style="font-size:12px">${u.src==="whatsapp"?"📲 "+esc(mname(u.by))+" · ":""}${esc(u.group||"")} · ${new Date(u.at).toLocaleDateString("ar-EG")}</div></div>`).join("")||'<div class="empty">لسه مفيش تحديثات</div>'}</div>`;
-}
+function prjFeed(n){const L=PJ.filter(p=>p.official===true).sort((a,b)=>(b.upd||b.at||0)-(a.upd||a.at||0)).slice(0,n);if(!L.length)return `<div class="card empty">لا توجد تحديثات لمشاريع الشركة حتى الآن.</div>`;return `<div class="card"><h3>🏢 آخر تحديثات مشاريع الشركة</h3>${L.map(p=>`<div style="padding:8px 0;border-bottom:1px solid var(--bd)"><div class="row" style="justify-content:space-between"><b>${esc(p.name)}</b><span class="t ${p.status==="متاح"?"warm":"none"}">${esc(p.status||"تحديث")}</span></div><div class="m" style="white-space:normal">${esc(p.latestUpdate||p.description||"")}</div><div class="m">${p.upd?new Date(p.upd).toLocaleDateString("ar-EG"):""}</div></div>`).join("")}</div>`}
+function prjDash(){const official=PJ.filter(p=>p.official===true),k=t=>official.filter(p=>p.type===t).length;return `<div style="height:14px"></div><div class="grid"><div class="kpi"><b>${k("commercial")}</b><span>🏬 مشاريع تجارية</span></div><div class="kpi"><b>${k("residential")}</b><span>🏠 مشاريع سكنية</span></div><div class="kpi"><b>${official.length}</b><span>🏢 مشاريع الشركة</span></div></div><div style="height:14px"></div>`+prjFeed(5)}
+function teamProjectsView(){const official=PJ.filter(p=>p.official===true).sort((a,b)=>(b.upd||b.at||0)-(a.upd||a.at||0));return `<div class="card"><h3>🏢 مشاريع الشركة</h3><p class="m">المشاريع الرسمية المعتمدة من الإدارة فقط.</p></div>${official.map(p=>`<div class="card"><h3>${esc(p.name)}</h3><div class="m">${esc(p.company||"")} · ${esc(p.location||"")}</div><p>${esc(p.description||"")}</p><div class="m">المساحات: ${esc(p.areas||"—")} · الأسعار: ${esc(p.price||"حسب التحديث")}</div><p>أنظمة السداد: ${esc(p.payment||"—")}</p>${p.latestUpdate?`<p>${esc(p.latestUpdate)}</p>`:""}</div>`).join("")||`<div class="card empty">لم تضف الإدارة مشاريع الشركة حتى الآن.</div>`}`}
+function prjView(){return pjView()}
+
 function viewAsM(u){realMe=realMe||me;me=u;viewAs=u;render(1)}
 function backAdmin(){me=realMe||me;viewAs="";render(1)}
 async function demoUsers(){
@@ -464,7 +477,7 @@ function profView(){
   const id=ME(),A=AVT[id]||{},n=(members[id]&&members[id].name)||(isAdmin?"الأدمن":"");
   const up=crop?`<div class="cvw"><canvas id="cv" width="280" height="280"></canvas></div><div style="max-width:300px;margin:12px auto;display:grid;gap:6px"><label class="m">تكبير<input type="range" min="1" max="3" step="0.01" value="${crop.z}" style="width:100%" oninput="crop.z=+this.value;drawCrop()"></label><label class="m">يمين / شمال<input id="cx" type="range" min="-1" max="1" step="0.01" value="${crop.x}" style="width:100%" oninput="crop.x=+this.value;drawCrop()"></label><label class="m">فوق / تحت<input id="cy" type="range" min="-1" max="1" step="0.01" value="${crop.y}" style="width:100%" oninput="crop.y=+this.value;drawCrop()"></label><div class="row" style="justify-content:center"><button class="btn" onclick="savePhoto()">💾 حفظ</button><button class="btn g" onclick="crop=null;render(1)">إلغاء</button></div></div>`
   :`<div class="row" style="justify-content:center"><label class="btn" style="cursor:pointer">📷 ${A.photo?"غيّر الصورة":"ارفع صورة"}<input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden onchange="pickPhoto(this.files[0])"></label></div>`;
-  return `<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">👤 حسابي</h3><button class="btn g" onclick="goHome()">رجوع</button></div>${crop?"":`<div style="text-align:center;margin:14px 0"><div class="pv">${A.photo?`<img src="${esc(A.photo)}" alt="">`:`<span>${esc((n||"👤").trim().slice(0,1))}</span>`}</div><div class="m" style="margin-top:6px">${esc(n)}</div></div>`}${up}<div class="m" style="text-align:center;margin-top:8px">${esc(gmsg)}</div><p class="m" style="text-align:center;font-size:12px">JPG / PNG / WEBP · استخدم صورتك أنت بس</p></div>${lookCard()}${avCard(A)}${waCard()}`;
+  return `<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">👤 حسابي</h3><button class="btn g" onclick="goHome()">رجوع</button></div>${crop?"":`<div style="text-align:center;margin:14px 0"><div class="pv">${A.photo?`<img src="${esc(A.photo)}" alt="">`:`<span>${esc((n||"👤").trim().slice(0,1))}</span>`}</div><div class="m" style="margin-top:6px">${esc(n)}</div></div>`}${up}<div class="m" style="text-align:center;margin-top:8px">${esc(gmsg)}</div><p class="m" style="text-align:center;font-size:12px">JPG / PNG / WEBP · استخدم صورتك أنت بس</p></div>${lookCard()}${avCard(A)}`;
 }
 
 const DL={skin:"#f1c27d",hair:"short",hc:"#2b1d10",beard:0,glasses:0};
@@ -516,38 +529,21 @@ function lookCard(){
   <div class="m">النظارة</div><div class="row" style="margin:6px 0">${b("glasses",0,"بدون")}${b("glasses",1,"نظارة")}</div></div>`;
 }
 
-const vups=()=>ups.filter(u=>(isAdmin&&!viewAs)||!u.by||u.by===me);
-const waHex=()=>{const a=new Uint8Array(24);if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else a.forEach((_,i)=>a[i]=Math.floor(Math.random()*256));return [...a].map(b=>b.toString(16).padStart(2,"0")).join("")};
-async function waSave(p){
-  const id=ME();
-  try{if(WAM[id])await db.collection("wa_meta").doc(id).update(p);else await db.collection("wa_meta").doc(id).set({token:waHex(),allowed:[],seen:{},...p})}catch(e){gmsg="تعذّر الحفظ"}
-  render(1);
-}
-function waFollow(chat,name,on){const al=((WAM[ME()]||{}).allowed||[]).filter(a=>a.id!==chat);if(on)al.push({id:chat,name});return waSave({allowed:al})}
-async function waSim(){
-  const t="تحديث Pantera: شقق سكنية جديدة بمساحات متنوعة، ومقدم 5% (رسالة جروب تجريبية)",c=await classify(t);
-  await db.collection("updates").add({text:t,name:c.name,type:c.type,group:"جروب تجريبي",at:Date.now(),by:ME(),src:"whatsapp"});gmsg="وصلت رسالة تجريبية ✅";render(1);
-}
-function waCard(){
-  const id=ME(),M=WAM[id]||{},base=window.WA_BASE||"",al=M.allowed||[],url=M.token&&base?`${base}/functions/v1/whatsapp-webhook?token=${M.token}`:"";
-  const seen=Object.entries(M.seen||{}).filter(([c])=>!al.some(a=>a.id===c));
-  return `<div class="card"><h3>📲 ربط واتساب</h3><p class="m">رسائل جروبات المشاريع اللي بتتابعها على رقمك بتوصل لوحدها وتتصنّف (تجاري/سكني) وتظهر في الداشبورد بتاعك بس. الرسائل الخاصة بتتجاهل، وبنخزّن رسائل الجروبات اللي إنت بتختارها فقط.</p>
-  <input placeholder="رقم الواتساب (مثلاً 01012345678)" value="${esc(M.phone||"")}" style="width:100%;margin-bottom:8px" onchange="waSave({phone:this.value.trim()})">
-  ${base?(M.token?`<div class="m">رابط الاستقبال (سرّي، بيتحط في سيرفر الربط):</div><div class="row"><input readonly value="${esc(url)}" style="flex:1;min-width:0" onfocus="this.select()"><button class="btn g" onclick="waSave({token:waHex()})">🔑 تجديد</button></div>`:`<button class="btn" onclick="waSave({})">🔗 فعّل الربط</button>`):`<p class="m">الاستقبال الفعلي من الواتساب بيشتغل في نسخة الدومين. هنا تقدر تشوف الشكل بمحاكاة رسالة.</p><button class="btn g" onclick="waSim()">📲 محاكاة رسالة جروب</button>`}
-  <div class="m" style="margin-top:10px">جروبات بتتابعها (${al.length})</div>
-  ${al.map(a=>`<div class="row" style="justify-content:space-between;padding:4px 0"><span>${esc(a.name||a.id)}</span><button class="btn g" data-c="${esc(a.id)}" onclick="waFollow(this.dataset.c,'',false)">إلغاء</button></div>`).join("")||`<div class="m">ولا جروب لسه</div>`}
-  ${seen.length?`<div class="m" style="margin-top:10px">جروبات ظهرت ومش متابَعة</div>${seen.map(([c,s])=>`<div class="row" style="justify-content:space-between;padding:4px 0"><span>${esc(s.name||c)}</span><button class="btn" data-c="${esc(c)}" data-n="${esc(s.name||"")}" onclick="waFollow(this.dataset.c,this.dataset.n,true)">تابع</button></div>`).join("")}`:""}
-  ${M.lastAt?`<div class="m" style="margin-top:10px">آخر رسالة وصلت: ${new Date(M.lastAt).toLocaleString("ar-EG")} · الإجمالي ${M.count||0}</div>`:""}</div>`;
-}
-
 const STG=["تجهيز","إطلاق","متابعة","معاينات","حجز","تعاقد"];
 const TPL=["تحديد الفئة المستهدفة","تجهيز الإعلان والمحتوى","استقبال الليدز","مكالمات المتابعة","تنظيم المعاينات","إتمام الحجز","التعاقد والتسليم"];
 const pvis=()=>PJ.filter(p=>p.owner===ME()||p.vis==="all");
+let pjFiles=[],pjAudioBlob=null,pjRecTarget="new",pjRecorder=null,pjRecStream=null,pjRecChunks=[],pjRecTimer=null,pjRecStarted=0,pjRecElapsed=0;
 async function pjAdd(){
   const n=document.getElementById("pn").value.trim();if(!n)return;const t=Date.now();
-  try{await db.collection("projects").add({name:n,type:document.getElementById("pt").value,vis:document.getElementById("pv").value,owner:ME(),stage:0,tasks:TPL.map(x=>({t:x,done:false})),note:"",at:t,upd:t})}catch(e){gmsg="تعذّر الحفظ"}
-  pjForm=false;render(1);
+  try{const d={name:n,type:document.getElementById("pt").value,vis:document.getElementById("pv").value,owner:ME(),stage:0,tasks:TPL.map(x=>({t:x,done:false})),note:"",attachments:[],at:t,upd:t};const ref=await db.collection("projects").add(d);if(pjFiles.length||pjAudioBlob)await pjSaveAttachments(ref.id);pjFiles=[];pjAudioBlob=null;}
+  catch(e){gmsg="تعذّر الحفظ"} pjFiles=[];pjAudioBlob=null;pjForm=false;render(1);
 }
+function pjPickFiles(files){pjFiles=[...(files||[])].slice(0,8);const e=document.getElementById("pjFileNames");if(e)e.textContent=pjFiles.map(x=>x.name).join("، ")||"لا توجد مرفقات"}
+async function pjRecStart(target="new"){if(pjRecorder)return;pjRecTarget=target;if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)return toast("التسجيل غير مدعوم في المتصفح");try{pjRecStream=await navigator.mediaDevices.getUserMedia({audio:true});pjRecChunks=[];pjRecorder=new MediaRecorder(pjRecStream);pjRecorder.ondataavailable=e=>{if(e.data?.size)pjRecChunks.push(e.data)};pjRecorder.onstop=()=>{pjAudioBlob=new Blob(pjRecChunks,{type:pjRecorder?.mimeType||"audio/webm"});pjRecStream?.getTracks().forEach(t=>t.stop());pjRecStream=null;pjRecorder=null;clearInterval(pjRecTimer);pjRecTimer=null;toast("تم التسجيل؛ اضغط حفظ المشروع")};pjRecorder.start();pjRecStarted=Date.now();pjRecTimer=setInterval(()=>{const e=document.getElementById("pjRecClock");if(e)e.textContent=fmtS((Date.now()-pjRecStarted)/1000)},500);render(1)}catch(e){toast("اسمح باستخدام الميكروفون")}}
+function pjRecStop(){if(pjRecorder&&pjRecorder.state!=="inactive")pjRecorder.stop()}
+async function pjSaveAttachments(id){if(pjRecTarget!=="new"&&pjRecTarget!==id)return toast("التسجيل مرتبط بمشروع آخر");const p=pjGet(id),arr=[...(p.attachments||[])],t=Date.now();if(!VC?.put)throw new Error("storage");for(const f of pjFiles){const path=ME()+"/project-"+id+"-"+t+"-"+Math.random().toString(36).slice(2)+"-"+f.name.replace(/[^a-z0-9._-]/gi,"_");const stored=await VC.put(path,f);arr.push({path:stored,name:f.name,type:f.type||"application/octet-stream",at:t,by:ME()})}if(pjAudioBlob){const ext=/mp4/.test(pjAudioBlob.type)?"m4a":"webm",path=ME()+"/project-voice-"+id+"-"+t+"."+ext,stored=await VC.put(path,pjAudioBlob);arr.push({path:stored,name:"تسجيل صوتي",type:pjAudioBlob.type,voice:true,at:t,by:ME()})}await db.collection("projects").doc(id).update({attachments:arr,upd:t});pjFiles=[];pjAudioBlob=null;pjRecTarget="new";toast("تم حفظ مرفقات المشروع") }
+async function pjOpenAttachment(path){if(!VC?.url)return toast("خدمة الملفات غير متاحة");try{window.open(await VC.url(path),"_blank","noopener")}catch(e){toast("تعذّر فتح المرفق")}}
+
 const pjUp=(id,p)=>db.collection("projects").doc(id).update({...p,upd:Date.now()}).catch(()=>{gmsg="تعذّر الحفظ"});
 const pjGet=id=>PJ.find(x=>x.id===id)||{tasks:[]};
 function pjTask(id,i,v){return pjUp(id,{tasks:pjGet(id).tasks.map((x,k)=>k===i?{...x,done:v}:x)})}
@@ -559,13 +555,13 @@ function pjCard(p){
   return `<div class="card" data-pj="${esc(p.id)}"><div class="row" style="justify-content:space-between"><b style="font-size:16px">${esc(p.name)}</b><span class="row"><span class="t ${p.type==="commercial"?"warm":p.type==="residential"?"cold":"none"}">${TY[p.type]||TY.other}</span><span class="t none">${p.vis==="all"?"👥 للكل":"🔒 خاص"}</span></span></div>
   ${mine?"":`<div class="m">من: ${esc(mname(p.owner))} · للقراءة فقط</div>`}
   <div class="stg">${STG.map((s,i)=>`<button class="${i<p.stage?"done":i===p.stage?"cur":""}" ${mine?`onclick="pjUp('${p.id}',{stage:${i}})"`:"disabled"}>${s}</button>`).join("")}</div>
-  <div class="pbar"><i style="width:${pct}%"></i></div><div class="m">${dn}/${T.length} مهمة · ${pct}%${lc?` · ${lc} ليد`:""}</div>
+  <div class="pbar"><i style="width:${pct}%"></i></div><div class="m">${dn}/${T.length} مهمة · ${pct}%${lc?` · ${lc} ليد`:""}</div>${(p.attachments||[]).length?`<div class="row">${p.attachments.map(a=>`<button class="btn g" onclick="pjOpenAttachment('${esc(a.path)}')">${a.voice?"🎙":"📎"} ${esc(a.name||"مرفق")}</button>`).join("")}</div>`:""}
   ${(p.hooks||[]).length?`<div class="m" style="margin-top:8px">✨ هوكس محفوظة</div>${p.hooks.map((x,i)=>`<div class="row" style="padding:3px 0"><span style="flex:1;white-space:normal">${esc(x)}</span></div>`).join("")}`:""}${T.map((x,i)=>`<label class="row" style="padding:4px 0"><input type="checkbox" ${x.done?"checked":""} ${mine?`onchange="pjTask('${p.id}',${i},this.checked)"`:"disabled"}><span style="flex:1;${x.done?"text-decoration:line-through;opacity:.6":""}">${esc(x.t)}</span></label>`).join("")}
-  ${mine?`<div class="row" style="margin-top:6px"><input id="nt${p.id}" placeholder="مهمة جديدة" style="flex:1;min-width:0"><button class="btn g" onclick="pjAddTask('${p.id}')">＋</button></div><textarea placeholder="ملاحظات" style="margin-top:8px" onchange="pjUp('${p.id}',{note:this.value})">${esc(p.note||"")}</textarea><div class="row" style="margin-top:8px"><button class="btn g" onclick="pjUp('${p.id}',{vis:'${p.vis==="all"?"private":"all"}'})">${p.vis==="all"?"🔒 خليه خاص":"👥 شاركه مع الكل"}</button></div>`:(p.note?`<p class="m">${esc(p.note)}</p>`:"")}</div>`;
+  ${mine?`<div class="row" style="margin-top:6px"><input id="nt${p.id}" placeholder="مهمة جديدة" style="flex:1;min-width:0"><button class="btn g" onclick="pjAddTask('${p.id}')">＋</button></div><textarea placeholder="ملاحظات" style="margin-top:8px" onchange="pjUp('${p.id}',{note:this.value})">${esc(p.note||"")}</textarea><div class="row" style="margin-top:8px"><label class="btn g">📎 صور وملفات<input type="file" hidden multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.mp3,.wav,.m4a,.webm" onchange="pjPickFiles(this.files)"></label><span id="pjFileNames" class="m">${(p.attachments||[]).length} مرفق محفوظ</span><button class="btn g" onclick="pjRecStart('${p.id}')">🎙 تسجيل فويس</button><span id="pjRecClock" class="t hot">00:00</span><button class="btn g" onclick="pjRecStop()">⏹</button><button class="btn" onclick="pjSaveAttachments('${p.id}')">حفظ المرفقات</button></div><div class="row" style="margin-top:8px"><button class="btn g" onclick="pjUp('${p.id}',{vis:'${p.vis==="all"?"private":"all"}'})">${p.vis==="all"?"🔒 خليه خاص":"👥 شاركه مع الكل"}</button></div>`:(p.note?`<p class="m">${esc(p.note)}</p>`:"")}</div>`;
 }
 function pjView(){
   const all=pvis(),mine=all.filter(p=>p.owner===ME()),oth=all.filter(p=>p.owner!==ME());
-  return `<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">📁 مشاريعي</h3><span class="row"><button class="btn" onclick="pjForm=!pjForm;render(1)">＋ مشروع</button><button class="btn g" onclick="goHome()">رجوع</button></span></div><p class="m" style="margin:8px 0 0">كل مشروع ليه سير عمل (مراحل ومهام). خليه 🔒 خاص بيك بس، أو 👥 يظهر لكل الفريق للقراءة فقط.</p>${pjForm?`<div class="two" style="margin-top:10px"><input id="pn" placeholder="اسم المشروع"><select id="pt"><option value="residential">🏠 سكني</option><option value="commercial">🏬 تجاري</option><option value="other">غير مصنّف</option></select><select id="pv"><option value="private">🔒 خاص بيا</option><option value="all">👥 للكل</option></select><button class="btn" onclick="pjAdd()">إضافة</button></div>`:""}</div>
+  return `<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">📁 مشاريعي</h3><span class="row"><button class="btn" onclick="pjForm=!pjForm;render(1)">＋ مشروع</button><button class="btn g" onclick="goHome()">رجوع</button></span></div><p class="m" style="margin:8px 0 0">كل مشروع ليه سير عمل (مراحل ومهام). خليه 🔒 خاص بيك بس، أو 👥 يظهر لكل الفريق للقراءة فقط.</p>${pjForm?`<div class="two" style="margin-top:10px"><input id="pn" placeholder="اسم المشروع"><select id="pt"><option value="residential">🏠 سكني</option><option value="commercial">🏬 تجاري</option><option value="other">غير مصنّف</option></select><select id="pv"><option value="private">🔒 خاص بيا</option><option value="all">👥 للكل</option></select><label class="btn g">📎 صور وملفات<input type="file" hidden multiple onchange="pjPickFiles(this.files)"></label><span id="pjFileNames" class="m">لا توجد مرفقات</span><button class="btn g" onclick="pjRecStart('new')">🎙 تسجيل فويس</button><span id="pjRecClock" class="t hot">00:00</span><button class="btn g" onclick="pjRecStop()">⏹</button><button class="btn" onclick="pjAdd()">إضافة</button></div>`:""}</div>
   ${mine.map(pjCard).join("")||`<div class="card empty">لسه معندكش مشاريع</div>`}${oth.length?`<h3 style="margin:14px 4px 8px">مشاريع شاركها الفريق</h3>${oth.map(pjCard).join("")}`:""}`;
 }
 
@@ -753,11 +749,13 @@ function exp(){
     if(MODE==="user"&&isAdmin){GATE="isadmin";render(1);return}
     const okp=user.approved?await user.approved():true;
     if(!isAdmin&&!okp){PEND=true;render(1);setInterval(async()=>{try{if(await user.approved())location.reload()}catch(e){}},8000);return}
-    db.collection("members").onSnapshot(s=>{members={};s.docs.forEach(d=>members[d.id]=d.data());render()},()=>{});
+    db.collection("members").onSnapshot(s=>{members={};s.docs.forEach(d=>members[d.id]=d.data());isTeamLeader=!!(members[me]&&members[me].role==="team_leader");render()},()=>{});
+    db.collection("group_vault").onSnapshot(s=>{teamVaultItems=s.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
+    db.collection("maps_library").onSnapshot(s=>{mapsItems=s.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
+    db.collection("feedback").onSnapshot(s=>{feedbackItems=s.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
     db.doc("settings/config").onSnapshot(s=>{if(s.exists)cfg={...cfg,...s.data()};render()},()=>{});
     db.collection("voices").onSnapshot(s=>{voices=s.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
     db.collection("projects").onSnapshot(s=>{PJ=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.upd||0)-(a.upd||0));render()},()=>{});
-    db.collection("wa_meta").onSnapshot(s=>{WAM={};s.docs.forEach(d=>WAM[d.id]=d.data());render()},()=>{});
     db.collection("avatars").onSnapshot(s=>{AVT={};s.docs.forEach(d=>AVT[d.id]=d.data());render()},()=>{});
     db.collection("calls").onSnapshot(s=>{calls=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.at-b.at);render()},()=>{});
     db.collection("updates").onSnapshot(s=>{ups=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.at||0)-(a.at||0));render()},()=>{});
